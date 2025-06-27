@@ -48,4 +48,4 @@ export function getProductList(params) {
     method: 'get',
     params
   })
-} 
+}

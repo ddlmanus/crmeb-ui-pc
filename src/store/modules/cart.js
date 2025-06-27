@@ -16,11 +16,11 @@ const mutations = {
       })
     })
   },
-  
+
   SET_CART_COUNT: (state, count) => {
     state.cartCount = count
   },
-  
+
   UPDATE_CART_ITEM: (state, { id, cartNum }) => {
     let found = false
     state.cartMerchantList.forEach(merchant => {
@@ -40,7 +40,7 @@ const mutations = {
       })
     }
   },
-  
+
   REMOVE_CART_ITEM: (state, id) => {
     state.cartMerchantList.forEach(merchant => {
       merchant.cartInfoList = merchant.cartInfoList.filter(item => item.id !== id)
@@ -112,7 +112,7 @@ const actions = {
 const getters = {
   cartMerchantList: state => state.cartMerchantList,
   cartCount: state => state.cartCount,
-  
+
   // 获取扁平的购物车列表
   allCartItems: state => {
     const items = []
@@ -127,7 +127,7 @@ const getters = {
     })
     return items
   },
-  
+
   // 计算购物车总价
   cartTotal: (state, getters) => {
     return getters.allCartItems.reduce((total, item) => {

@@ -254,4 +254,4 @@ export default {
   justify-content: center;
   margin-top: 40px;
 }
-</style> 
+</style>

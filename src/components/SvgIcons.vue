@@ -82,7 +82,7 @@ export default {
 <style lang="scss" scoped>
 .svg-icons {
   display: inline-block;
-  
+
   .icon {
     display: inline-block;
     width: 1em;
@@ -92,4 +92,4 @@ export default {
     overflow: hidden;
   }
 }
-</style> 
+</style>

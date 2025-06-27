@@ -25,4 +25,4 @@ export function setUserInfo(userInfo) {
 
 export function removeUserInfo() {
   localStorage.removeItem('userInfo')
-} 
+}

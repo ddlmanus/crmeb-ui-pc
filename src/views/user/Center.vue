@@ -34,7 +34,7 @@
             <div class="action-text">我的优惠券</div>
             <div class="action-count">{{ userStats.couponCount || 0 }}张</div>
           </div>
-          
+
           <div class="action-item" @click="$router.push('/user/assets')">
             <div class="action-icon assets-icon">
               <i class="el-icon-wallet"></i>
@@ -42,7 +42,7 @@
             <div class="action-text">我的资产</div>
             <div class="action-count">¥{{ userStats.balance || '0.00' }}</div>
           </div>
-          
+
           <div class="action-item" @click="goToOrderList('-1')">
             <div class="action-icon order-icon">
               <i class="el-icon-document"></i>
@@ -50,7 +50,7 @@
             <div class="action-text">我的订单</div>
             <div class="action-count">{{ userStats.orderCount || 0 }}个</div>
           </div>
-          
+
           <div class="action-item" @click="$router.push('/user/address')">
             <div class="action-icon address-icon">
               <i class="el-icon-location"></i>
@@ -169,11 +169,17 @@
               </div>
               <div class="menu-label">售后管理</div>
             </div>
-            <div class="menu-item" @click="$router.push('/user/coupons')">
+            <div class="menu-item" @click="$router.push('/user/coupon')">
               <div class="menu-icon">
                 <i class="el-icon-ticket"></i>
               </div>
               <div class="menu-label">我的优惠券</div>
+            </div>
+            <div class="menu-item" @click="$router.push('/coupon/center')">
+              <div class="menu-icon">
+                <i class="el-icon-present"></i>
+              </div>
+              <div class="menu-label">领券中心</div>
             </div>
             <div class="menu-item" @click="$router.push('/user/collections')">
               <div class="menu-icon">
@@ -216,8 +222,8 @@
                   <el-tag :type="getStatusType(order.status)" size="mini">{{ getStatusText(order.status) }}</el-tag>
                 </div>
                 <div class="order-goods">
-                  <img v-if="order.orderDetailList && order.orderDetailList[0]" 
-                       :src="order.orderDetailList[0].image" 
+                  <img v-if="order.orderDetailList && order.orderDetailList[0]"
+                       :src="order.orderDetailList[0].image"
                        :alt="order.orderDetailList[0].productName" />
                   <div class="goods-info">
                     <p v-if="order.orderDetailList && order.orderDetailList[0]">
@@ -309,7 +315,7 @@ export default {
           this.userInfo = response.data.userInfo || {}
           this.orderStats = response.data.orderStats || {}
           this.userAssets = response.data.userAssets || {}
-          
+
           // 更新快捷功能统计数据
           this.userStats = {
             couponCount: response.data.userAssets?.coupons || 0,
@@ -332,19 +338,19 @@ export default {
 
     async fetchRecentOrders() {
       try {
-        const response = await getOrderList({ 
-          page: 1, 
+        const response = await getOrderList({
+          page: 1,
           limit: 3,
           status: -1  // 添加必需的status参数，-1表示获取全部订单
         })
         if (response.code === 200) {
           // 处理不同的响应数据结构
           let orderData = response.data
-          
+
           // 如果data是数组，直接使用
           if (Array.isArray(orderData)) {
             this.recentOrders = orderData
-          } 
+          }
           // 如果data是对象，尝试从list字段获取
           else if (orderData && orderData.list) {
             this.recentOrders = orderData.list || []
@@ -388,7 +394,7 @@ export default {
       try {
         await this.$refs.editForm.validate()
         this.updating = true
-        
+
         const response = await updateUserInfo(this.editForm)
         if (response.code === 200) {
           this.$message.success('更新成功')
@@ -484,25 +490,25 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  
+
   .user-info {
     display: flex;
     align-items: center;
     gap: 20px;
-    
+
     .avatar {
       width: 80px;
       height: 80px;
       border-radius: 50%;
       overflow: hidden;
       border: 3px solid rgba(255, 255, 255, 0.3);
-      
+
       img {
         width: 100%;
         height: 100%;
         object-fit: cover;
       }
-      
+
       .default-avatar {
         width: 100%;
         height: 100%;
@@ -514,33 +520,33 @@ export default {
         color: rgba(255, 255, 255, 0.8);
       }
     }
-    
+
     .user-details {
       h3 {
         margin: 0 0 8px;
         font-size: 24px;
         font-weight: bold;
       }
-      
+
       .phone {
         margin: 0 0 12px;
         opacity: 0.8;
         font-size: 14px;
       }
-      
+
       .user-tags {
         display: flex;
         gap: 8px;
       }
     }
   }
-  
+
   .user-actions {
     .el-button {
       background: rgba(255, 255, 255, 0.2);
       border: 1px solid rgba(255, 255, 255, 0.3);
       color: white;
-      
+
       &:hover {
         background: rgba(255, 255, 255, 0.3);
       }
@@ -557,13 +563,13 @@ export default {
   background: #fff;
   border-radius: 8px;
   padding: 20px;
-  
+
   .section-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
-    
+
     h3 {
       margin: 0;
       color: #333;
@@ -577,7 +583,7 @@ export default {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
     gap: 15px;
-    
+
     .stat-item {
       text-align: center;
       padding: 20px;
@@ -585,19 +591,19 @@ export default {
       background: #f8f9fa;
       cursor: pointer;
       transition: all 0.3s ease;
-      
+
       &:hover {
         background: #e9ecef;
         transform: translateY(-2px);
       }
-      
+
       .stat-number {
         font-size: 24px;
         font-weight: bold;
         color: #409eff;
         margin-bottom: 8px;
       }
-      
+
       .stat-label {
         color: #666;
         font-size: 14px;
@@ -611,7 +617,7 @@ export default {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 20px;
-    
+
     .asset-item {
       display: flex;
       align-items: center;
@@ -619,7 +625,7 @@ export default {
       padding: 20px;
       border-radius: 8px;
       background: #f8f9fa;
-      
+
       .asset-icon {
         width: 50px;
         height: 50px;
@@ -631,7 +637,7 @@ export default {
         color: white;
         font-size: 20px;
       }
-      
+
       .asset-info {
         .asset-value {
           font-size: 18px;
@@ -639,7 +645,7 @@ export default {
           color: #333;
           margin-bottom: 4px;
         }
-        
+
         .asset-label {
           color: #666;
           font-size: 14px;
@@ -654,7 +660,7 @@ export default {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
     gap: 20px;
-    
+
     .menu-item {
       display: flex;
       flex-direction: column;
@@ -664,12 +670,12 @@ export default {
       background: #f8f9fa;
       cursor: pointer;
       transition: all 0.3s ease;
-      
+
       &:hover {
         background: #e9ecef;
         transform: translateY(-2px);
       }
-      
+
       .menu-icon {
         width: 50px;
         height: 50px;
@@ -682,7 +688,7 @@ export default {
         font-size: 20px;
         margin-bottom: 12px;
       }
-      
+
       .menu-label {
         color: #333;
         font-size: 14px;
@@ -696,7 +702,7 @@ export default {
   .order-list {
     display: grid;
     gap: 15px;
-    
+
     .order-item {
       display: flex;
       justify-content: space-between;
@@ -706,48 +712,48 @@ export default {
       border-radius: 8px;
       cursor: pointer;
       transition: all 0.3s ease;
-      
+
       &:hover {
         border-color: #409eff;
         box-shadow: 0 2px 8px rgba(64, 158, 255, 0.1);
       }
-      
+
       .order-info {
         flex: 1;
-        
+
         .order-header {
           display: flex;
           justify-content: space-between;
           align-items: center;
           margin-bottom: 10px;
-          
+
           .order-sn {
             font-size: 14px;
             color: #666;
           }
         }
-        
+
         .order-goods {
           display: flex;
           gap: 15px;
-          
+
           img {
             width: 60px;
             height: 60px;
             object-fit: cover;
             border-radius: 4px;
           }
-          
+
           .goods-info {
             flex: 1;
-            
+
             p {
               margin: 0 0 8px;
               color: #333;
               font-size: 14px;
               line-height: 1.4;
             }
-            
+
             .order-price {
               color: #ff4757;
               font-weight: bold;
@@ -755,19 +761,19 @@ export default {
           }
         }
       }
-      
+
       .order-actions {
         color: #999;
         font-size: 18px;
       }
     }
   }
-  
+
   .no-orders {
     text-align: center;
     padding: 40px;
     color: #666;
-    
+
     p {
       margin-bottom: 20px;
     }
@@ -778,14 +784,14 @@ export default {
   display: flex;
   align-items: center;
   gap: 15px;
-  
+
   .avatar-preview {
     width: 60px;
     height: 60px;
     border-radius: 50%;
     object-fit: cover;
   }
-  
+
   .avatar-uploader-icon {
     width: 60px;
     height: 60px;
@@ -805,7 +811,7 @@ export default {
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 20px;
   margin-bottom: 30px;
-  
+
   .action-item {
     background: #fff;
     border-radius: 8px;
@@ -814,12 +820,12 @@ export default {
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    
+
     &:hover {
       transform: translateY(-2px);
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
     }
-    
+
     .action-icon {
       width: 60px;
       height: 60px;
@@ -830,31 +836,31 @@ export default {
       justify-content: center;
       font-size: 24px;
       color: #fff;
-      
+
       &.coupon-icon {
         background: linear-gradient(135deg, #43e97b, #38f9d7);
       }
-      
+
       &.assets-icon {
         background: linear-gradient(135deg, #667eea, #764ba2);
       }
-      
+
       &.order-icon {
         background: linear-gradient(135deg, #f093fb, #f5576c);
       }
-      
+
       &.address-icon {
         background: linear-gradient(135deg, #4facfe, #00f2fe);
       }
     }
-    
+
     .action-text {
       font-size: 16px;
       font-weight: 500;
       color: #333;
       margin-bottom: 10px;
     }
-    
+
     .action-count {
       font-size: 14px;
       color: #666;
@@ -868,51 +874,51 @@ export default {
     flex-direction: column;
     text-align: center;
     gap: 20px;
-    
+
     .user-info {
       flex-direction: column;
       text-align: center;
     }
   }
-  
+
   .quick-actions {
     grid-template-columns: repeat(2, 1fr);
     gap: 15px;
   }
-  
+
   .stats-grid {
     grid-template-columns: repeat(3, 1fr) !important;
     gap: 10px;
-    
+
     .stat-item {
       padding: 15px 8px;
-      
+
       .stat-number {
         font-size: 20px;
       }
-      
+
       .stat-label {
         font-size: 12px;
       }
     }
   }
-  
+
   .asset-grid {
     grid-template-columns: repeat(2, 1fr) !important;
   }
-  
+
   .menu-grid {
     grid-template-columns: repeat(3, 1fr) !important;
   }
-  
+
   .order-item {
     flex-direction: column;
     align-items: flex-start !important;
     gap: 15px;
-    
+
     .order-actions {
       align-self: flex-end;
     }
   }
 }
-</style> 
+</style>

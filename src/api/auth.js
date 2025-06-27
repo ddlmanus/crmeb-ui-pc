@@ -73,7 +73,7 @@ export function register(data) {
 
 /**
  * 发送短信验证码
- * @param {Object} data 
+ * @param {Object} data
  * @param {string} data.phone 手机号
  * @param {string} data.type 类型：login-登录 register-注册 forget-忘记密码
  */
@@ -122,4 +122,4 @@ export function resetPassword(data) {
     method: 'post',
     data
   })
-} 
+}

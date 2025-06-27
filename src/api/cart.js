@@ -85,4 +85,4 @@ export function calculateCartPrice(ids) {
     method: 'post',
     data: { ids }
   })
-} 
+}

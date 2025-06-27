@@ -115,4 +115,4 @@ export function getAboutUsInfo() {
     url: '/pc/user/aboutus/info',
     method: 'get'
   })
-} 
+}

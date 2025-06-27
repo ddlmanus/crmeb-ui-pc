@@ -182,34 +182,34 @@ export default {
 .about-page {
   background: #f5f5f5;
   min-height: calc(100vh - 160px);
-  
+
   .container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
   }
-  
+
   .about-content {
     background: white;
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
-  
+
   .section {
     padding: 40px;
-    
+
     &:not(:last-child) {
       border-bottom: 1px solid #f0f0f0;
     }
   }
-  
+
   // 公司简介头部
   .company-intro {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     padding: 60px 40px;
-    
+
     .intro-header {
       .header-content {
         display: flex;
@@ -217,19 +217,19 @@ export default {
         align-items: center;
         flex-wrap: wrap;
         gap: 30px;
-        
+
         .logo-section {
           display: flex;
           align-items: center;
           gap: 20px;
-          
+
           .company-logo {
             width: 80px;
             height: 80px;
             border-radius: 50%;
             border: 3px solid rgba(255, 255, 255, 0.3);
           }
-          
+
           .company-title {
             h1 {
               margin: 0;
@@ -237,7 +237,7 @@ export default {
               font-weight: bold;
               text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
             }
-            
+
             p {
               margin: 8px 0 0 0;
               font-size: 16px;
@@ -245,17 +245,17 @@ export default {
             }
           }
         }
-        
+
         .company-slogan {
           text-align: right;
-          
+
           h2 {
             margin: 0;
             font-size: 28px;
             font-weight: 600;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
           }
-          
+
           p {
             margin: 10px 0 0 0;
             font-size: 16px;
@@ -265,19 +265,19 @@ export default {
       }
     }
   }
-  
+
   // 节标题
   .section-title {
     margin-bottom: 30px;
     text-align: center;
-    
+
     h3 {
       margin: 0 0 15px 0;
       font-size: 28px;
       color: #333;
       font-weight: 600;
     }
-    
+
     .title-line {
       width: 60px;
       height: 3px;
@@ -286,36 +286,36 @@ export default {
       border-radius: 2px;
     }
   }
-  
+
   // 详情内容
   .detail-content {
     font-size: 16px;
     line-height: 1.8;
     color: #555;
-    
+
     :deep(.default-about) {
       h3 {
         color: #333;
         font-size: 24px;
         margin-bottom: 20px;
       }
-      
+
       h4 {
         color: #333;
         font-size: 18px;
         margin: 25px 0 15px 0;
       }
-      
+
       p {
         margin-bottom: 15px;
       }
-      
+
       ul {
         li {
           margin-bottom: 8px;
           position: relative;
           padding-left: 20px;
-          
+
           &:before {
             content: '•';
             color: #667eea;
@@ -327,41 +327,41 @@ export default {
       }
     }
   }
-  
+
   // 企业理念
   .values-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 30px;
-    
+
     .value-item {
       text-align: center;
       padding: 30px 20px;
       border-radius: 12px;
       background: #f8f9ff;
       transition: all 0.3s;
-      
+
       &:hover {
         transform: translateY(-5px);
         box-shadow: 0 10px 25px rgba(102, 126, 234, 0.15);
       }
-      
+
       .value-icon {
         margin-bottom: 20px;
-        
+
         i {
           font-size: 48px;
           color: #667eea;
         }
       }
-      
+
       h4 {
         margin: 0 0 15px 0;
         color: #333;
         font-size: 20px;
         font-weight: 600;
       }
-      
+
       p {
         margin: 0;
         color: #666;
@@ -369,13 +369,13 @@ export default {
       }
     }
   }
-  
+
   // 联系我们
   .contact-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 30px;
-    
+
     .contact-item {
       display: flex;
       align-items: flex-start;
@@ -384,36 +384,36 @@ export default {
       background: #f8f9ff;
       border-radius: 12px;
       transition: all 0.3s;
-      
+
       &:hover {
         transform: translateY(-3px);
         box-shadow: 0 8px 20px rgba(102, 126, 234, 0.12);
       }
-      
+
       .contact-icon {
         i {
           font-size: 32px;
           color: #667eea;
         }
       }
-      
+
       .contact-detail {
         flex: 1;
-        
+
         h4 {
           margin: 0 0 8px 0;
           color: #333;
           font-size: 18px;
           font-weight: 600;
         }
-        
+
         p {
           margin: 0 0 5px 0;
           color: #333;
           font-size: 16px;
           font-weight: 500;
         }
-        
+
         span {
           color: #666;
           font-size: 14px;
@@ -429,29 +429,29 @@ export default {
     .container {
       padding: 10px;
     }
-    
+
     .section {
       padding: 20px;
     }
-    
+
     .company-intro {
       padding: 30px 20px;
-      
+
       .intro-header .header-content {
         flex-direction: column;
         text-align: center;
-        
+
         .company-slogan {
           text-align: center;
         }
       }
     }
-    
+
     .values-grid {
       grid-template-columns: 1fr;
       gap: 20px;
     }
-    
+
     .contact-grid {
       grid-template-columns: 1fr;
       gap: 20px;

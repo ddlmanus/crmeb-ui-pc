@@ -47,8 +47,8 @@
       <div class="section-title">选择以下支付方式</div>
       <div class="payment-methods">
         <!-- 余额支付 -->
-        <div 
-          class="payment-item" 
+        <div
+          class="payment-item"
           :class="{ selected: selectedPayMethod === 'yue', disabled: isBalanceInsufficient }"
           @click="!isBalanceInsufficient && selectPayMethod('yue')"
         >
@@ -67,8 +67,8 @@
         </div>
 
         <!-- 微信支付 -->
-        <div 
-          class="payment-item" 
+        <div
+          class="payment-item"
           :class="{ selected: selectedPayMethod === 'weixin' }"
           @click="selectPayMethod('weixin')"
         >
@@ -83,8 +83,8 @@
         </div>
 
         <!-- 支付宝支付 -->
-        <div 
-          class="payment-item" 
+        <div
+          class="payment-item"
           :class="{ selected: selectedPayMethod === 'alipay' }"
           @click="selectPayMethod('alipay')"
         >
@@ -102,8 +102,8 @@
 
     <!-- 去支付按钮 -->
     <div class="pay-button-section">
-      <el-button 
-        type="primary" 
+      <el-button
+        type="primary"
         class="pay-button"
         :loading="paying"
         :disabled="!selectedPayMethod"
@@ -146,7 +146,7 @@
 </template>
 
 <script>
-import { getCashierInfo, orderPayment, queryWechatPayResult, queryAliPayResult } from '@/api/payment'
+import { getCashierInfo, orderPayment, queryWechatPayResult, queryAliPayResult, getPayConfig } from '@/api/payment'
 import { getOrderDetail } from '@/api/order'
 
 export default {
@@ -196,12 +196,12 @@ export default {
       this.totalPrice = this.$route.query.totalPrice || ''
       this.addressInfo = this.$route.query.addressInfo || ''
       this.productNames = this.$route.query.productNames || ''
-      
+
       // 如果有订单号，尝试获取详细信息
       if (this.orderNo) {
         await this.fetchOrderInfo()
       }
-      
+
       // 获取用户余额
       await this.fetchUserBalance()
     },
@@ -210,16 +210,16 @@ export default {
       try {
         this.loading = true
         const response = await getCashierInfo(this.orderNo)
-        
+
         if (response.code === 200) {
           this.orderInfo = response.data
-          
+
           // 处理收货地址信息
           if (response.data.address) {
             const addr = response.data.address
             this.addressInfo = `${addr.realName} ${addr.phone} ${addr.province}${addr.city}${addr.district} ${addr.detail}`
           }
-          
+
           // 处理商品名称
           if (response.data.orderDetailList && response.data.orderDetailList.length > 0) {
             this.productNames = response.data.orderDetailList.map(item => item.productName).join('、')
@@ -235,15 +235,28 @@ export default {
 
     async fetchUserBalance() {
       try {
-        // 这里应该调用获取用户信息的API
-        // const response = await getUserInfo()
-        // this.userBalance = response.data.balance || 0
-        
-        // 暂时设置一个示例值
-        this.userBalance = 0.00
+        console.log('正在获取支付配置和用户余额...')
+        const response = await getPayConfig()
+        console.log('支付配置响应:', response)
+
+        if (response.code === 200 && response.data) {
+          // 从支付配置中获取用户余额
+          this.userBalance = parseFloat(response.data.userBalance || 0)
+          
+          // 如果余额支付被禁用，则将余额设为0
+          // 修正：yuePayStatus 可能是布尔值 true/false 或数字 1/0
+          if (!response.data.yuePayStatus || response.data.yuePayStatus === 0) {
+            this.userBalance = 0
+          }
+          
+          console.log('余额支付状态:', response.data.yuePayStatus)
+          console.log('用户余额:', this.userBalance)
+        } else {
+          this.userBalance = 0
+        }
       } catch (error) {
         console.error('获取用户余额失败:', error)
-        this.userBalance = 0.00
+        this.userBalance = 0
       }
     },
 
@@ -266,6 +279,16 @@ export default {
       this.selectedPayMethod = code
     },
 
+    getPayChannel(payType) {
+      // 根据支付方式返回对应的支付渠道
+      const channelMap = {
+        'yue': 'yue',        // 余额支付
+        'weixin': 'native',   // 微信支付 - PC端使用native扫码支付
+        'alipay': 'alipayPc'  // 支付宝 - PC端支付
+      }
+      return channelMap[payType] || 'h5'
+    },
+
     async handlePay() {
       if (!this.selectedPayMethod) {
         this.$message.warning('请选择支付方式')
@@ -274,20 +297,29 @@ export default {
 
       try {
         this.paying = true
-        
+
+        // 根据后端OrderPayRequest要求构建支付参数
         const payData = {
-          orderNo: this.orderInfo.orderSn,
+          orderNo: this.orderInfo.orderSn || this.orderNo,
           payType: this.selectedPayMethod,
+          payChannel: this.getPayChannel(this.selectedPayMethod),
           from: 'pc'
         }
 
+        console.log('支付请求参数:', payData)
+
         const response = await orderPayment(payData)
-        
+
         if (response.code === 200) {
+          // 保存支付返回的订单号
+          if (response.data && response.data.orderNo) {
+            this.orderNo = response.data.orderNo
+          }
+
           // 显示支付处理弹窗
           this.showPayDialog = true
           this.payStatus = 'processing'
-          
+
           // 如果是第三方支付，需要处理支付跳转或显示二维码
           if (this.selectedPayMethod === 'weixin') {
             this.handleWechatPay(response.data)
@@ -295,7 +327,7 @@ export default {
             this.handleAlipay(response.data)
           } else if (this.selectedPayMethod === 'yue') {
             // 余额支付直接查询结果
-            this.checkPayResult()
+            this.checkPayResult(response.data.orderNo)
           }
         } else {
           this.$message.error(response.msg || '支付发起失败')
@@ -330,18 +362,29 @@ export default {
     startPayResultQuery(payType) {
       let queryCount = 0
       const maxQueries = 60 // 最多查询60次（5分钟）
-      
-      this.payTimer = setInterval(async () => {
+
+      this.payTimer = setInterval(async() => {
         queryCount++
-        
+
         try {
+          // 获取正确的订单号
+          const queryOrderNo = this.orderNo || (this.orderInfo && this.orderInfo.orderSn)
+          
+          if (!queryOrderNo) {
+            this.payStatus = 'failed'
+            this.payErrorMsg = '订单号不存在'
+            clearInterval(this.payTimer)
+            this.payTimer = null
+            return
+          }
+
           let response
           if (payType === 'wechat') {
-            response = await queryWechatPayResult(this.orderInfo.orderSn)
+            response = await queryWechatPayResult(queryOrderNo)
           } else if (payType === 'alipay') {
-            response = await queryAliPayResult(this.orderInfo.orderSn)
+            response = await queryAliPayResult(queryOrderNo)
           }
-          
+
           if (response.code === 200 && response.data) {
             // 支付成功
             this.payStatus = 'success'
@@ -366,11 +409,22 @@ export default {
       }, 5000) // 每5秒查询一次
     },
 
-    checkPayResult() {
+    checkPayResult(orderNo = null) {
       // 余额支付直接查询结果
-      setTimeout(async () => {
+      setTimeout(async() => {
         try {
-          const response = await queryWechatPayResult(this.orderInfo.orderSn)
+          // 使用传入的orderNo或者从组件数据中获取
+          const queryOrderNo = orderNo || this.orderNo || (this.orderInfo && this.orderInfo.orderSn)
+          
+          console.log('查询支付结果的订单号:', queryOrderNo)
+          
+          if (!queryOrderNo) {
+            this.payStatus = 'failed'
+            this.payErrorMsg = '订单号不存在'
+            return
+          }
+
+          const response = await queryWechatPayResult(queryOrderNo)
           if (response.code === 200 && response.data) {
             this.payStatus = 'success'
           } else {
@@ -378,6 +432,7 @@ export default {
             this.payErrorMsg = '余额支付失败'
           }
         } catch (error) {
+          console.error('查询支付结果失败:', error)
           this.payStatus = 'failed'
           this.payErrorMsg = '支付查询失败'
         }
@@ -408,10 +463,10 @@ export default {
   padding: 12px 20px;
   font-size: 14px;
   color: #666;
-  
+
   span {
     cursor: pointer;
-    
+
     &:hover {
       color: #ff6600;
     }
@@ -423,7 +478,7 @@ export default {
   color: white;
   position: relative;
   overflow: hidden;
-  
+
   .banner-content {
     display: flex;
     justify-content: space-between;
@@ -431,24 +486,24 @@ export default {
     padding: 20px 40px;
     position: relative;
     z-index: 2;
-    
+
     .banner-left {
       .success-title {
         font-size: 24px;
         font-weight: 600;
         margin-bottom: 8px;
       }
-      
+
       .countdown {
         font-size: 16px;
-        
+
         .time {
           font-weight: 600;
           margin-left: 8px;
         }
       }
     }
-    
+
     .banner-right {
       .banner-icon {
         background: rgba(255, 255, 255, 0.2);
@@ -465,25 +520,25 @@ export default {
 .order-info {
   background: #fff;
   padding: 24px 40px;
-  
+
   .info-row {
     display: flex;
     margin-bottom: 12px;
-    
+
     &:last-child {
       margin-bottom: 0;
     }
-    
+
     .label {
       min-width: 80px;
       color: #666;
       font-size: 14px;
     }
-    
+
     .value {
       color: #333;
       font-size: 14px;
-      
+
       &.price {
         color: #ff6600;
         font-weight: 600;
@@ -496,18 +551,18 @@ export default {
   background: #fff;
   margin-top: 20px;
   padding: 24px 40px;
-  
+
   .section-title {
     font-size: 16px;
     font-weight: 600;
     color: #333;
     margin-bottom: 20px;
   }
-  
+
   .payment-methods {
     display: flex;
     gap: 20px;
-    
+
     .payment-item {
       flex: 1;
       border: 2px solid #e8e8e8;
@@ -517,17 +572,17 @@ export default {
       cursor: pointer;
       transition: all 0.3s ease;
       position: relative;
-      
+
       &:hover:not(.disabled) {
         border-color: #ff6600;
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(255, 102, 0, 0.15);
       }
-      
+
       &.selected {
         border-color: #ff6600;
         background: #fff7f0;
-        
+
         &::after {
           content: "✓";
           position: absolute;
@@ -543,16 +598,16 @@ export default {
           text-align: center;
         }
       }
-      
+
       &.disabled {
         opacity: 0.5;
         cursor: not-allowed;
         background: #f9f9f9;
       }
-      
+
       .payment-icon {
         margin-bottom: 12px;
-        
+
         .icon-circle {
           width: 50px;
           height: 50px;
@@ -565,17 +620,17 @@ export default {
           font-weight: 600;
           color: white;
           background: #ff6600;
-          
+
           &.weixin {
             background: #1aad19;
           }
-          
+
           &.alipay {
             background: #1677ff;
           }
         }
       }
-      
+
       .payment-info {
         .payment-name {
           font-size: 16px;
@@ -583,11 +638,11 @@ export default {
           color: #333;
           margin-bottom: 4px;
         }
-        
+
         .payment-balance {
           font-size: 14px;
           color: #666;
-          
+
           .insufficient {
             color: #ff4757;
             margin-left: 8px;
@@ -603,19 +658,19 @@ export default {
   margin-top: 20px;
   padding: 30px 40px;
   text-align: right;
-  
+
   .pay-button {
     background: #ff6600;
     border-color: #ff6600;
     font-size: 16px;
     padding: 12px 40px;
     border-radius: 4px;
-    
+
     &:hover {
       background: #e55a00;
       border-color: #e55a00;
     }
-    
+
     &:disabled {
       background: #ccc;
       border-color: #ccc;
@@ -626,31 +681,31 @@ export default {
 .pay-dialog-content {
   text-align: center;
   padding: 20px;
-  
+
   i {
     font-size: 48px;
     margin-bottom: 15px;
     display: block;
   }
-  
+
   .pay-processing i {
     color: #409eff;
     animation: spin 1s linear infinite;
   }
-  
+
   .pay-success i {
     color: #67c23a;
   }
-  
+
   .pay-failed i {
     color: #f56c6c;
   }
-  
+
   p {
     margin: 10px 0;
     font-size: 16px;
   }
-  
+
   .error-msg {
     color: #f56c6c;
     font-size: 14px;
@@ -667,25 +722,25 @@ export default {
   border-radius: 8px;
   padding: 80px 20px;
   text-align: center;
-  
+
   .loading-content {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 15px;
     color: #409eff;
-    
+
     i {
       font-size: 40px;
     }
   }
-  
+
   .error-icon {
     font-size: 80px;
     color: #ddd;
     margin-bottom: 20px;
   }
-  
+
   .error-text {
     font-size: 18px;
     color: #333;
@@ -698,22 +753,22 @@ export default {
     flex-direction: column;
     gap: 20px;
   }
-  
+
   .payment-option {
     .payment-icon {
       width: 40px;
       height: 40px;
       margin-right: 15px;
-      
+
       i {
         font-size: 20px;
       }
     }
   }
-  
+
   .pay-actions .el-button {
     width: 100%;
     margin: 5px 0;
   }
 }
-</style> 
+</style>

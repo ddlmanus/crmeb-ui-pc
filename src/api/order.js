@@ -144,4 +144,4 @@ export function getAvailableCoupons(params) {
     method: 'get',
     params
   })
-} 
+}

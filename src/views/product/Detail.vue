@@ -13,7 +13,7 @@
                 <i class="el-icon-zoom-in" @click="previewImage"></i>
               </div>
             </div>
-            
+
             <!-- 缩略图列表 -->
             <div class="thumbnail-list">
               <div
@@ -27,7 +27,7 @@
               </div>
             </div>
           </div>
-          
+
           <div class="product-details">
             <!-- 商品标题和价格 -->
             <div class="product-header">
@@ -46,7 +46,7 @@
                 </span>
               </div>
             </div>
-            
+
             <div class="price-section">
               <div class="price-group">
                 <span class="current-price">¥{{ selectedSku.price || productInfo.price }}</span>
@@ -63,7 +63,7 @@
                 </div>
               </div>
             </div>
-            
+
             <!-- 规格选择 -->
             <div class="spec-section" v-if="productInfo.specs && productInfo.specs.length">
               <div
@@ -77,7 +77,7 @@
                     v-for="option in spec.options"
                     :key="option.value"
                     class="spec-option"
-                    :class="{ 
+                    :class="{
                       active: selectedSpecs[spec.name] === option.value,
                       disabled: option.disabled
                     }"
@@ -88,7 +88,7 @@
                 </div>
               </div>
             </div>
-            
+
             <!-- 数量选择 -->
             <div class="quantity-section">
               <div class="quantity-title">数量：</div>
@@ -101,7 +101,7 @@
                 />
               </div>
             </div>
-            
+
             <!-- 操作按钮 -->
             <div class="action-buttons">
               <el-button
@@ -126,7 +126,7 @@
                 立即购买
               </el-button>
             </div>
-            
+
             <!-- 服务保障 -->
             <div class="service-guarantee">
               <div class="service-title">服务保障</div>
@@ -151,7 +151,7 @@
             </div>
           </div>
         </div>
-        
+
         <!-- 商品详情内容 -->
         <div class="product-content-section">
           <el-tabs v-model="activeTab" class="product-tabs">
@@ -210,7 +210,7 @@
           </el-tabs>
         </div>
       </div>
-      
+
       <!-- 推荐商品 -->
       <div class="recommend-section">
         <h3 class="section-title">相关推荐</h3>
@@ -352,9 +352,12 @@ export default {
       return this.hasRequiredSpecs && this.selectedSku.stock > 0
     },
     hasRequiredSpecs() {
+      // 如果没有规格或者是单规格商品，直接返回true
       if (!this.productInfo.specs || this.productInfo.specs.length === 0) {
         return true
       }
+      
+      // 多规格商品需要检查所有规格是否都已选择
       return this.productInfo.specs.every(spec => this.selectedSpecs[spec.name])
     }
   },
@@ -388,13 +391,13 @@ export default {
         console.log('正在加载商品详情，ID:', this.id)
         const res = await getProductDetail(this.id)
         console.log('商品详情API响应:', res)
-        
+
         if (res.code === 200 && res.data) {
           const data = res.data
           const productInfo = data.productInfo
           const productAttr = data.productAttr || []
           const productValue = data.productValue || {}
-          
+
           // 处理图片数据 - 正确解析JSON字符串
           let images = []
           if (productInfo.sliderImage) {
@@ -408,13 +411,13 @@ export default {
           } else {
             images = [productInfo.image]
           }
-          
+
           // 处理规格数据
           const specs = this.formatSpecs(productAttr)
-          
+
           // 处理SKU数据
           const skus = this.formatSkus(productValue, specs)
-          
+
           this.productInfo = {
             id: productInfo.id,
             name: productInfo.name,
@@ -434,7 +437,7 @@ export default {
             reviews: []
           }
         }
-        
+
       } catch (error) {
         console.error('加载商品详情失败:', error)
         throw error
@@ -443,7 +446,7 @@ export default {
     formatSpecs(productAttr) {
       // 格式化商品规格数据
       if (!productAttr || productAttr.length === 0) return []
-      
+
       const specs = {}
       productAttr.forEach(attr => {
         if (!specs[attr.attrName]) {
@@ -459,7 +462,7 @@ export default {
         } else if (Array.isArray(attr.attrValues)) {
           values = attr.attrValues
         }
-        
+
         values.forEach(value => {
           if (!specs[attr.attrName].options.find(opt => opt.value === value)) {
             specs[attr.attrName].options.push({
@@ -469,36 +472,61 @@ export default {
           }
         })
       })
-      
+
       return Object.values(specs)
     },
     formatSkus(productValue, specs) {
       // 格式化SKU数据
-      if (!productValue) return []
-      
+      if (!productValue || Object.keys(productValue).length === 0) {
+        return []
+      }
+
       const skus = []
-      Object.keys(productValue).forEach(key => {
-        const sku = productValue[key]
-        
+      Object.keys(productValue).forEach(skuKey => {
+        const sku = productValue[skuKey]
+
         // 根据规格名称构建specs对象
         const skuSpecs = {}
-        if (specs.length > 0) {
-          // 如果有规格，使用key作为规格值
-          specs.forEach(spec => {
-            skuSpecs[spec.name] = key
+        if (specs && specs.length > 0) {
+          // 如果有规格，解析skuKey中的规格值
+          specs.forEach((spec, index) => {
+            // 对于单规格，skuKey可能就是规格值
+            if (specs.length === 1) {
+              skuSpecs[spec.name] = skuKey
+            } else {
+              // 多规格需要按照某种格式解析
+              const specValues = skuKey.split(',')
+              skuSpecs[spec.name] = specValues[index] || skuKey
+            }
           })
         }
-        
+
         skus.push({
-          id: sku.id,
+          id: sku.id, // 使用后端返回的真实ID，这是attrValueId
           specs: skuSpecs,
           price: parseFloat(sku.price || 0),
           stock: parseInt(sku.stock || 0),
           image: sku.image,
-          sku: sku.sku
+          sku: sku.sku || skuKey,
+          skuKey: skuKey // 保留原始的sku字符串
         })
       })
-      
+
+      console.log('格式化后的SKUs:', skus)
+
+      // 如果没有SKU数据但有商品基础信息，创建一个默认SKU
+      if (skus.length === 0 && this.productInfo && this.productInfo.price !== undefined) {
+        skus.push({
+          id: null, // 单规格商品可能没有attrValueId
+          specs: {},
+          price: parseFloat(this.productInfo.price || 0),
+          stock: parseInt(this.productInfo.stock || 0),
+          image: this.productInfo.image,
+          sku: 'default',
+          skuKey: 'default'
+        })
+      }
+
       return skus
     },
     formatParams(productInfo) {
@@ -512,7 +540,11 @@ export default {
       ]
     },
     initDefaultSpecs() {
-      if (this.productInfo.specs) {
+      // 清空之前的选择
+      this.selectedSpecs = {}
+      
+      if (this.productInfo.specs && this.productInfo.specs.length > 0) {
+        // 多规格商品，选择第一个可用的规格
         this.productInfo.specs.forEach(spec => {
           const firstAvailable = spec.options.find(option => !option.disabled)
           if (firstAvailable) {
@@ -520,7 +552,14 @@ export default {
           }
         })
       }
+      
       this.updateSelectedSku()
+      
+      console.log('初始化默认规格完成:')
+      console.log('- selectedSpecs:', this.selectedSpecs)
+      console.log('- selectedSku:', this.selectedSku)
+      console.log('- specs length:', this.productInfo.specs ? this.productInfo.specs.length : 0)
+      console.log('- skus length:', this.productInfo.skus ? this.productInfo.skus.length : 0)
     },
     selectImage(image) {
       this.selectedImage = image
@@ -529,45 +568,64 @@ export default {
       this.$set(this.selectedSpecs, specName, value)
     },
     updateSelectedSku() {
-      if (this.productInfo.skus) {
-        const sku = this.productInfo.skus.find(sku => {
-          return Object.keys(this.selectedSpecs).every(key => 
-            sku.specs[key] === this.selectedSpecs[key]
-          )
-        })
-        this.selectedSku = sku || { price: this.productInfo.price, stock: this.productInfo.stock }
+      if (this.productInfo.skus && this.productInfo.skus.length > 0) {
+        // 如果有SKU数据，查找匹配的SKU
+        if (Object.keys(this.selectedSpecs).length > 0) {
+          const sku = this.productInfo.skus.find(sku => {
+            return Object.keys(this.selectedSpecs).every(key =>
+              sku.specs[key] === this.selectedSpecs[key]
+            )
+          })
+          this.selectedSku = sku || this.productInfo.skus[0] || { 
+            id: 'default',
+            price: this.productInfo.price, 
+            stock: this.productInfo.stock 
+          }
+        } else {
+          // 没有选择规格时，使用第一个SKU
+          this.selectedSku = this.productInfo.skus[0] || { 
+            id: 'default',
+            price: this.productInfo.price, 
+            stock: this.productInfo.stock 
+          }
+        }
       } else {
-        this.selectedSku = { price: this.productInfo.price, stock: this.productInfo.stock }
+        // 没有SKU数据，使用商品基础信息
+        this.selectedSku = { 
+          id: 'default',
+          price: this.productInfo.price, 
+          stock: this.productInfo.stock 
+        }
       }
     },
     async addToCart() {
       if (!this.canAddToCart) return
-      
+
       // 检查登录状态
       if (!this.$store.getters.token) {
         this.$message.warning('请先登录')
         this.$router.push('/login')
         return
       }
-      
+
       try {
         this.addingToCart = true
-        
+
         // 构建购物车数据，使用后端要求的参数格式
         const cartData = {
           productId: this.productInfo.id,
           productAttrUnique: this.selectedSku.id, // 这是关键参数
           cartNum: this.quantity
         }
-        
+
         console.log('添加到购物车的数据:', cartData)
-        
+
         await addCartItem(cartData)
-        
+
         // 更新购物车数量
         await this.getCartCount()
         this.$message.success('已添加到购物车')
-        
+
       } catch (error) {
         console.error('添加购物车失败:', error)
         if (error.code === 401) {
@@ -581,32 +639,69 @@ export default {
       }
     },
     async buyNow() {
-      if (!this.canBuyNow) return
-      
+      // 检查规格选择
+      if (!this.canBuyNow) {
+        if (!this.hasRequiredSpecs) {
+          this.$message.warning('请选择规格')
+          return
+        }
+        if (this.selectedSku.stock <= 0) {
+          this.$message.warning('商品库存不足')
+          return
+        }
+        return
+      }
+
+      // 检查登录状态
+      if (!this.$store.getters.token) {
+        this.$message.warning('请先登录')
+        this.$router.push('/login')
+        return
+      }
+
       try {
         this.buyingNow = true
-        
+
+        // 构建购物车数据，使用后端要求的参数格式
+        const cartData = {
+          productId: this.productInfo.id,
+          productAttrUnique: this.selectedSku.id || '', // SKU的唯一标识
+          cartNum: this.quantity
+        }
+
+        console.log('立即购买的数据:', cartData)
+
         // 先添加到购物车
-        await addCartItem({
+        await addCartItem(cartData)
+
+        // 跳转到确认订单页面
+        const queryParams = {
+          type: 'buyNow',
           productId: this.productInfo.id,
           quantity: this.quantity,
-          specs: this.selectedSpecs
-        })
-        
-        // 跳转到确认订单页面
+          specs: JSON.stringify(this.selectedSpecs)
+        }
+
+        // 只有当selectedSku.id存在时才传递attrValueId
+        if (this.selectedSku.id) {
+          queryParams.attrValueId = this.selectedSku.id
+        }
+
+        console.log('跳转到订单确认页面，参数:', queryParams)
+
         this.$router.push({
           path: '/order/confirm',
-          query: {
-            type: 'buyNow',
-            productId: this.productInfo.id,
-            quantity: this.quantity,
-            specs: JSON.stringify(this.selectedSpecs)
-          }
+          query: queryParams
         })
-        
+
       } catch (error) {
         console.error('立即购买失败:', error)
-        this.$message.error('立即购买失败')
+        if (error.code === 401) {
+          this.$message.warning('登录已过期，请重新登录')
+          this.$router.push('/login')
+        } else {
+          this.$message.error(error.message || '立即购买失败')
+        }
       } finally {
         this.buyingNow = false
       }
@@ -637,28 +732,28 @@ export default {
 .product-detail {
   background: #f5f5f5;
   min-height: calc(100vh - 160px);
-  
+
   .container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
   }
-  
+
   // 商品主体信息
   .product-main {
     background: white;
     border-radius: 8px;
     padding: 30px;
     margin-bottom: 20px;
-    
+
     .product-info-section {
       display: flex;
       gap: 40px;
       margin-bottom: 40px;
-      
+
       .product-gallery {
         flex: 0 0 400px;
-        
+
         .main-image {
           position: relative;
           width: 400px;
@@ -667,36 +762,36 @@ export default {
           border-radius: 8px;
           overflow: hidden;
           margin-bottom: 15px;
-          
+
           img {
             width: 100%;
             height: 100%;
             object-fit: cover;
           }
-          
+
           .image-actions {
             position: absolute;
             top: 10px;
             right: 10px;
-            
+
             i {
               background: rgba(0, 0, 0, 0.5);
               color: white;
               padding: 8px;
               border-radius: 4px;
               cursor: pointer;
-              
+
               &:hover {
                 background: rgba(0, 0, 0, 0.7);
               }
             }
           }
         }
-        
+
         .thumbnail-list {
           display: flex;
           gap: 10px;
-          
+
           .thumbnail-item {
             width: 60px;
             height: 60px;
@@ -704,11 +799,11 @@ export default {
             border-radius: 4px;
             overflow: hidden;
             cursor: pointer;
-            
+
             &.active {
               border-color: #409eff;
             }
-            
+
             img {
               width: 100%;
               height: 100%;
@@ -717,26 +812,26 @@ export default {
           }
         }
       }
-      
+
       .product-details {
         flex: 1;
-        
+
         .product-header {
           margin-bottom: 20px;
-          
+
           .product-title {
             font-size: 24px;
             color: #333;
             margin: 0 0 10px 0;
             line-height: 1.4;
           }
-          
+
           .product-subtitle {
             color: #666;
             font-size: 14px;
             margin-bottom: 10px;
           }
-          
+
           .product-labels {
             .product-label {
               display: inline-block;
@@ -745,33 +840,33 @@ export default {
               color: white;
               border-radius: 2px;
               margin-right: 8px;
-              
+
               &.hot {
                 background: #f56c6c;
               }
-              
+
               &.new {
                 background: #67c23a;
               }
             }
           }
         }
-        
+
         .price-section {
           background: #f8f9fa;
           padding: 20px;
           border-radius: 8px;
           margin-bottom: 25px;
-          
+
           .price-group {
             margin-bottom: 10px;
-            
+
             .current-price {
               color: #f56c6c;
               font-size: 28px;
               font-weight: bold;
             }
-            
+
             .original-price {
               color: #999;
               text-decoration: line-through;
@@ -779,17 +874,17 @@ export default {
               margin-left: 10px;
             }
           }
-          
+
           .price-info {
             display: flex;
             gap: 30px;
             font-size: 14px;
-            
+
             .price-item {
               .label {
                 color: #666;
               }
-              
+
               .value {
                 color: #333;
                 font-weight: 500;
@@ -797,42 +892,42 @@ export default {
             }
           }
         }
-        
+
         .spec-section {
           margin-bottom: 25px;
-          
+
           .spec-group {
             margin-bottom: 20px;
-            
+
             .spec-title {
               font-size: 14px;
               color: #333;
               margin-bottom: 10px;
             }
-            
+
             .spec-options {
               display: flex;
               flex-wrap: wrap;
               gap: 10px;
-              
+
               .spec-option {
                 padding: 8px 16px;
                 border: 1px solid #e6e6e6;
                 border-radius: 4px;
                 cursor: pointer;
                 transition: all 0.3s;
-                
+
                 &:hover:not(.disabled) {
                   border-color: #409eff;
                   color: #409eff;
                 }
-                
+
                 &.active {
                   border-color: #409eff;
                   background: #409eff;
                   color: white;
                 }
-                
+
                 &.disabled {
                   background: #f5f5f5;
                   color: #c0c4cc;
@@ -842,54 +937,54 @@ export default {
             }
           }
         }
-        
+
         .quantity-section {
           display: flex;
           align-items: center;
           margin-bottom: 30px;
-          
+
           .quantity-title {
             font-size: 14px;
             color: #333;
             margin-right: 15px;
           }
         }
-        
+
         .action-buttons {
           display: flex;
           gap: 15px;
           margin-bottom: 30px;
-          
+
           .el-button {
             flex: 1;
             height: 50px;
             font-size: 16px;
             border-radius: 25px;
-            
+
             i {
               margin-right: 5px;
             }
           }
         }
-        
+
         .service-guarantee {
           .service-title {
             font-size: 16px;
             color: #333;
             margin-bottom: 15px;
           }
-          
+
           .service-list {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 10px;
-            
+
             .service-item {
               display: flex;
               align-items: center;
               font-size: 14px;
               color: #666;
-              
+
               i {
                 color: #67c23a;
                 margin-right: 8px;
@@ -899,7 +994,7 @@ export default {
         }
       }
     }
-    
+
     // 商品详情内容
     .product-content-section {
       .product-tabs {
@@ -908,30 +1003,30 @@ export default {
           padding: 0 20px;
           margin: 0;
         }
-        
+
         ::v-deep .el-tabs__content {
           padding: 30px 20px;
         }
-        
+
         .detail-content {
           line-height: 1.6;
-          
+
           img {
             max-width: 100%;
             height: auto;
           }
         }
-        
+
         .params-table {
           width: 100%;
           border-collapse: collapse;
-          
+
           tr {
             border-bottom: 1px solid #e6e6e6;
-            
+
             td {
               padding: 12px 15px;
-              
+
               &.param-name {
                 background: #f8f9fa;
                 font-weight: 500;
@@ -940,83 +1035,83 @@ export default {
             }
           }
         }
-        
+
         .reviews-content {
           .review-summary {
             background: #f8f9fa;
             padding: 20px;
             border-radius: 8px;
             margin-bottom: 20px;
-            
+
             .rating-overview {
               display: flex;
               align-items: center;
               gap: 15px;
-              
+
               .rating-score {
                 font-size: 36px;
                 font-weight: bold;
                 color: #f56c6c;
               }
-              
+
               .rating-count {
                 color: #666;
               }
             }
           }
-          
+
           .review-list {
             .review-item {
               border-bottom: 1px solid #e6e6e6;
               padding: 20px 0;
-              
+
               &:last-child {
                 border-bottom: none;
               }
-              
+
               .review-header {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
                 margin-bottom: 10px;
-                
+
                 .user-info {
                   display: flex;
                   align-items: center;
                   gap: 10px;
-                  
+
                   .user-avatar {
                     width: 40px;
                     height: 40px;
                     border-radius: 50%;
                   }
-                  
+
                   .username {
                     font-weight: 500;
                   }
                 }
-                
+
                 .review-meta {
                   display: flex;
                   align-items: center;
                   gap: 10px;
-                  
+
                   .review-date {
                     color: #999;
                     font-size: 12px;
                   }
                 }
               }
-              
+
               .review-content {
                 margin-bottom: 10px;
                 line-height: 1.6;
               }
-              
+
               .review-images {
                 display: flex;
                 gap: 10px;
-                
+
                 .review-image {
                   width: 80px;
                   height: 80px;
@@ -1031,34 +1126,34 @@ export default {
       }
     }
   }
-  
+
   // 推荐商品
   .recommend-section {
     background: white;
     border-radius: 8px;
     padding: 30px;
-    
+
     .section-title {
       font-size: 20px;
       color: #333;
       margin: 0 0 20px 0;
       text-align: center;
     }
-    
+
     .recommend-products {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
       gap: 20px;
-      
+
       .recommend-item {
         text-align: center;
         cursor: pointer;
         transition: all 0.3s;
-        
+
         &:hover {
           transform: translateY(-4px);
         }
-        
+
         img {
           width: 100%;
           height: 180px;
@@ -1066,7 +1161,7 @@ export default {
           border-radius: 8px;
           margin-bottom: 10px;
         }
-        
+
         .product-info {
           .product-name {
             font-size: 14px;
@@ -1076,7 +1171,7 @@ export default {
             text-overflow: ellipsis;
             white-space: nowrap;
           }
-          
+
           .product-price {
             color: #f56c6c;
             font-weight: bold;
@@ -1092,37 +1187,37 @@ export default {
   .product-detail {
     .product-main {
       padding: 20px;
-      
+
       .product-info-section {
         flex-direction: column;
         gap: 20px;
-        
+
         .product-gallery {
           flex: none;
           align-self: center;
-          
+
           .main-image {
             width: 300px;
             height: 300px;
           }
         }
-        
+
         .service-guarantee {
           .service-list {
             grid-template-columns: 1fr;
           }
         }
       }
-      
+
       .action-buttons {
         flex-direction: column;
-        
+
         .el-button {
           flex: none;
         }
       }
     }
-    
+
     .recommend-section {
       .recommend-products {
         grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));

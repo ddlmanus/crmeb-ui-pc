@@ -88,13 +88,11 @@ export function getNewProducts(limit = 12) {
 
 /**
  * 获取秒杀商品
- * @param {number} limit 商品数量
  */
-export function getSeckillProducts(limit = 12) {
+export function getSeckillProducts() {
   return request({
-    url: '/pc/index/seckill-products',
-    method: 'get',
-    params: { limit }
+    url: '/pc/index/seckill/info',
+    method: 'get'
   })
 }
 
@@ -118,4 +116,14 @@ export function getSearchSuggestions(keyword) {
     method: 'get',
     params: { keyword }
   })
-} 
+}
+
+/**
+ * 获取底部导航信息
+ */
+export function getBottomNavigation() {
+  return request({
+    url: '/pc/index/get/bottom/navigation',
+    method: 'get'
+  })
+}

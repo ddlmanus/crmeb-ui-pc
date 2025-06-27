@@ -4,13 +4,13 @@
     <div class="navbar-container">
       <navbar />
     </div>
-    
+
     <!-- 主要内容区域 -->
     <div class="main-container">
       <div class="content-wrapper">
         <!-- 面包屑导航 -->
         <breadcrumb v-if="showBreadcrumb" class="breadcrumb-container" />
-        
+
         <!-- 页面内容 -->
         <div class="app-main">
           <transition name="fade-transform" mode="out-in">
@@ -19,15 +19,15 @@
         </div>
       </div>
     </div>
-    
+
     <!-- 底部信息 -->
     <div class="footer-container">
       <app-footer />
     </div>
-    
+
     <!-- 返回顶部 -->
     <el-backtop target=".app-wrapper" />
-    
+
     <!-- 购物车悬浮球 -->
     <cart-float />
   </div>
@@ -113,4 +113,4 @@ export default {
   opacity: 0;
   transform: translateX(30px);
 }
-</style> 
+</style>

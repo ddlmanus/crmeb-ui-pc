@@ -77,46 +77,46 @@
               </div>
               <div class="order-actions">
                 <el-button size="small" @click="goToDetail(order.orderNo)">查看详情</el-button>
-                
+
                 <!-- 待支付 -->
                 <template v-if="order.status === 0">
                   <el-button size="small" @click="handleCancel(order.orderNo)">取消订单</el-button>
                   <el-button type="primary" size="small" @click="handlePay(order)">立即付款</el-button>
                 </template>
-                
+
                 <!-- 待发货 -->
                 <template v-if="order.status === 1">
                   <el-button size="small" @click="handleCancel(order.orderNo)">申请取消</el-button>
                 </template>
-                
+
                 <!-- 部分发货 -->
                 <template v-if="order.status === 2">
                   <el-button size="small" @click="handleViewLogistics(order.orderNo)">查看物流</el-button>
                 </template>
-                
+
                 <!-- 待核销 -->
                 <template v-if="order.status === 3">
                   <el-button size="small" @click="handleViewLogistics(order.orderNo)">查看详情</el-button>
                 </template>
-                
+
                 <!-- 待收货 -->
                 <template v-if="order.status === 4">
                   <el-button size="small" @click="handleViewLogistics(order.orderNo)">查看物流</el-button>
                   <el-button type="primary" size="small" @click="handleConfirm(order.orderNo)">确认收货</el-button>
                 </template>
-                
+
                 <!-- 已收货 -->
                 <template v-if="order.status === 5">
                   <el-button size="small" @click="handleRefund(order)">申请售后</el-button>
                   <el-button type="primary" size="small" @click="handleReview(order.orderNo)">去评价</el-button>
                 </template>
-                
+
                 <!-- 已完成 -->
                 <template v-if="order.status === 6">
                   <el-button size="small" @click="handleRefund(order)">申请售后</el-button>
                   <el-button size="small" @click="handleDelete(order.orderNo)">删除订单</el-button>
                 </template>
-                
+
                 <!-- 已取消 -->
                 <template v-if="order.status === 9">
                   <el-button size="small" @click="handleDelete(order.orderNo)">删除订单</el-button>
@@ -135,7 +135,7 @@
           <div class="empty-desc">快去选购心仪的商品吧</div>
           <el-button type="primary" @click="$router.push('/')">去购物</el-button>
         </div>
-        
+
         <!-- 加载状态 -->
         <div v-else class="loading-orders">
           <div class="loading-content">
@@ -203,20 +203,20 @@ export default {
           limit: this.pagination.limit,
           status: this.currentStatus
         }
-        
+
         console.log('获取订单列表请求参数:', params)
         const response = await getOrderList(params)
         console.log('订单列表API响应:', response)
-        
+
         if (response.code === 200) {
           // 处理不同的响应数据结构
           let orderData = response.data
-          
+
           // 如果data是数组，直接使用
           if (Array.isArray(orderData)) {
             this.orderList = orderData
             this.total = orderData.length
-          } 
+          }
           // 如果data是对象，尝试从list字段获取
           else if (orderData && orderData.list) {
             this.orderList = orderData.list || []
@@ -233,7 +233,7 @@ export default {
             this.orderList = []
             this.total = 0
           }
-          
+
           console.log('处理后的订单列表:', this.orderList)
           console.log('订单列表长度:', this.orderList.length)
         } else {
@@ -397,12 +397,12 @@ export default {
 
     getImageUrl(imagePath) {
       if (!imagePath) return ''
-      
+
       // 如果已经是完整的URL，直接返回
       if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
         return imagePath
       }
-      
+
       // 如果是相对路径，需要拼接域名
       const baseUrl = process.env.VUE_APP_BASE_URL || window.location.origin
       return imagePath.startsWith('/') ? baseUrl + imagePath : baseUrl + '/' + imagePath
@@ -426,7 +426,7 @@ export default {
 
 .page-header {
   margin-bottom: 20px;
-  
+
   h2 {
     margin: 0;
     color: #333;
@@ -438,10 +438,10 @@ export default {
   border-radius: 8px;
   padding: 0 20px;
   margin-bottom: 20px;
-  
+
   .status-tab-list {
     display: flex;
-    
+
     .status-tab {
       position: relative;
       padding: 20px 30px;
@@ -449,16 +449,16 @@ export default {
       color: #666;
       border-bottom: 3px solid transparent;
       transition: all 0.3s ease;
-      
+
       &:hover {
         color: #409eff;
       }
-      
+
       &.active {
         color: #409eff;
         border-bottom-color: #409eff;
       }
-      
+
       .el-badge {
         margin-left: 8px;
       }
@@ -477,7 +477,7 @@ export default {
   background: #fff;
   border-radius: 8px;
   overflow: hidden;
-  
+
   .order-header {
     display: flex;
     justify-content: space-between;
@@ -485,23 +485,23 @@ export default {
     padding: 15px 20px;
     background: #fafafa;
     border-bottom: 1px solid #f0f0f0;
-    
+
     .order-info {
       display: flex;
       gap: 20px;
-      
+
       .order-sn {
         font-weight: bold;
         color: #333;
       }
-      
+
       .order-time {
         color: #999;
         font-size: 14px;
       }
     }
   }
-  
+
   .order-goods {
     .goods-item {
       display: flex;
@@ -509,15 +509,15 @@ export default {
       border-bottom: 1px solid #f5f5f5;
       cursor: pointer;
       transition: background 0.3s ease;
-      
+
       &:hover {
         background: #fafafa;
       }
-      
+
       &:last-child {
         border-bottom: none;
       }
-      
+
       img {
         width: 80px;
         height: 80px;
@@ -525,33 +525,33 @@ export default {
         border-radius: 4px;
         margin-right: 15px;
       }
-      
+
       .goods-info {
         flex: 1;
-        
+
         h4 {
           margin: 0 0 8px;
           font-size: 14px;
           color: #333;
           line-height: 1.4;
         }
-        
+
         .goods-specs {
           font-size: 12px;
           color: #999;
           margin-bottom: 8px;
         }
-        
+
         .goods-price {
           display: flex;
           align-items: center;
           gap: 10px;
-          
+
           .price {
             color: #ff4757;
             font-weight: bold;
           }
-          
+
           .quantity {
             color: #666;
             font-size: 14px;
@@ -560,28 +560,28 @@ export default {
       }
     }
   }
-  
+
   .order-footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 15px 20px;
     background: #fafafa;
-    
+
     .order-amount {
       .amount-info {
         text-align: right;
-        
+
         span {
           color: #666;
           margin-right: 15px;
         }
-        
+
         .total {
           font-size: 16px;
           color: #333;
           font-weight: bold;
-          
+
           .amount {
             color: #ff4757;
             font-size: 18px;
@@ -589,7 +589,7 @@ export default {
         }
       }
     }
-    
+
     .order-actions {
       display: flex;
       gap: 10px;
@@ -602,19 +602,19 @@ export default {
   border-radius: 8px;
   text-align: center;
   padding: 80px 20px;
-  
+
   .empty-icon {
     font-size: 80px;
     color: #ddd;
     margin-bottom: 20px;
   }
-  
+
   .empty-text {
     font-size: 18px;
     color: #333;
     margin-bottom: 10px;
   }
-  
+
   .empty-desc {
     color: #666;
     margin-bottom: 30px;
@@ -629,18 +629,18 @@ export default {
 @media (max-width: 768px) {
   .order-status-tabs {
     padding: 0 10px;
-    
+
     .status-tab-list {
       overflow-x: auto;
       white-space: nowrap;
-      
+
       .status-tab {
         padding: 15px 20px;
         display: inline-block;
       }
     }
   }
-  
+
   .order-item {
     .order-header {
       flex-direction: column;
@@ -648,26 +648,26 @@ export default {
       gap: 10px;
       padding: 15px;
     }
-    
+
     .order-goods .goods-item {
       padding: 15px;
-      
+
       img {
         width: 60px;
         height: 60px;
       }
     }
-    
+
     .order-footer {
       flex-direction: column;
       align-items: stretch;
       gap: 15px;
       padding: 15px;
-      
+
       .order-actions {
         justify-content: center;
       }
     }
   }
 }
-</style> 
+</style>

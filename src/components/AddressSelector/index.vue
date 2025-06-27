@@ -10,11 +10,11 @@
         <el-form-item label="收货人" prop="realName">
           <el-input v-model="form.realName" placeholder="请输入收货人姓名"></el-input>
         </el-form-item>
-        
+
         <el-form-item label="手机号" prop="phone">
           <el-input v-model="form.phone" placeholder="请输入手机号"></el-input>
         </el-form-item>
-        
+
         <el-form-item label="所在地区" prop="regionText">
           <el-cascader
             v-model="regionValue"
@@ -25,7 +25,7 @@
             style="width: 100%"
           ></el-cascader>
         </el-form-item>
-        
+
         <el-form-item label="详细地址" prop="detail">
           <el-input
             v-model="form.detail"
@@ -34,12 +34,12 @@
             placeholder="请输入详细地址"
           ></el-input>
         </el-form-item>
-        
+
         <el-form-item>
           <el-checkbox v-model="form.isDefault">设为默认地址</el-checkbox>
         </el-form-item>
       </el-form>
-      
+
       <div slot="footer" class="dialog-footer">
         <el-button @click="handleClose">取消</el-button>
         <el-button type="primary" :loading="loading" @click="handleSubmit">确定</el-button>
@@ -145,13 +145,13 @@ export default {
         console.error('加载省份数据失败:', error)
       }
     },
-    
+
     async loadRegionData(node, resolve) {
       const { level, value } = node
-      
+
       try {
         let data = []
-        
+
         if (level === 0) {
           // 加载省份
           const response = await getProvinceList()
@@ -180,39 +180,39 @@ export default {
             }))
           }
         }
-        
+
         resolve(data)
       } catch (error) {
         console.error('加载地区数据失败:', error)
         resolve([])
       }
     },
-    
+
     handleRegionChange(value) {
       if (value && value.length >= 3) {
         // 查找对应的地区名称
         this.findRegionNames(value)
       }
     },
-    
+
     findRegionNames(regionIds) {
       // 从选项中查找对应的名称
       let province, city, district
-      
+
       // 查找省份
       const provinceOption = this.regionOptions.find(item => item.regionId === regionIds[0])
       if (provinceOption) {
         province = provinceOption
         this.form.province = province.regionName
         this.form.provinceId = province.regionId
-        
+
         // 查找城市
         const cityOption = provinceOption.children?.find(item => item.regionId === regionIds[1])
         if (cityOption) {
           city = cityOption
           this.form.city = city.regionName
           this.form.cityId = city.regionId
-          
+
           // 查找区县
           const districtOption = cityOption.children?.find(item => item.regionId === regionIds[2])
           if (districtOption) {
@@ -223,18 +223,18 @@ export default {
         }
       }
     },
-    
+
     async handleSubmit() {
       try {
         await this.$refs.form.validate()
-        
+
         this.loading = true
-        
+
         const submitData = {
           ...this.form,
           street: '' // 街道字段，可选
         }
-        
+
         if (this.form.id) {
           // 编辑地址
           await editAddress(submitData)
@@ -244,7 +244,7 @@ export default {
           await addAddress(submitData)
           this.$message.success('添加地址成功')
         }
-        
+
         this.$emit('success')
         this.handleClose()
       } catch (error) {
@@ -254,13 +254,13 @@ export default {
         this.loading = false
       }
     },
-    
+
     handleClose() {
       this.visible = false
       this.$emit('input', false)
       this.resetForm()
     },
-    
+
     resetForm() {
       this.form = {
         id: null,

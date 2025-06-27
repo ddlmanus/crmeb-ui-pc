@@ -4,7 +4,7 @@ import { getToken } from '@/utils/auth'
 
 // 创建axios实例
 const service = axios.create({
-  baseURL: process.env.NODE_ENV === 'development' 
+  baseURL: process.env.NODE_ENV === 'development'
     ? '/api'  // 开发环境使用代理
     : 'http://localhost:20002/api', // 生产环境直接指向后端
   timeout: 15000 // 增加超时时间
@@ -17,12 +17,12 @@ service.interceptors.request.use(
     if (getToken()) {
       config.headers['Authori-zation'] = getToken()
     }
-    
+
     // 添加常用请求头
     config.headers['Content-Type'] = 'application/json'
-    
+
     console.log('发送请求:', config.method.toUpperCase(), config.url, config.data || config.params)
-    
+
     return config
   },
   error => {
@@ -35,9 +35,9 @@ service.interceptors.request.use(
 service.interceptors.response.use(
   response => {
     console.log('收到响应:', response.config.url, response.data)
-    
+
     const res = response.data
-    
+
     // 兼容不同的响应格式
     if (res.code !== undefined) {
       // 标准格式：{ code: 200, data: {}, message: '' }
@@ -58,47 +58,47 @@ service.interceptors.response.use(
   },
   error => {
     console.log('响应错误:', error)
-    
+
     let message = '网络错误'
     if (error.response) {
       switch (error.response.status) {
-        case 401:
-          message = '未授权，请登录'
-          break
-        case 403:
-          message = '拒绝访问'
-          break
-        case 404:
-          message = '请求地址出错'
-          break
-        case 408:
-          message = '请求超时'
-          break
-        case 500:
-          message = '服务器内部错误'
-          break
-        case 501:
-          message = '服务未实现'
-          break
-        case 502:
-          message = '网关错误'
-          break
-        case 503:
-          message = '服务不可用'
-          break
-        case 504:
-          message = '网关超时'
-          break
-        case 505:
-          message = 'HTTP版本不受支持'
-          break
-        default:
-          message = error.response.data?.message || '网络错误'
+      case 401:
+        message = '未授权，请登录'
+        break
+      case 403:
+        message = '拒绝访问'
+        break
+      case 404:
+        message = '请求地址出错'
+        break
+      case 408:
+        message = '请求超时'
+        break
+      case 500:
+        message = '服务器内部错误'
+        break
+      case 501:
+        message = '服务未实现'
+        break
+      case 502:
+        message = '网关错误'
+        break
+      case 503:
+        message = '服务不可用'
+        break
+      case 504:
+        message = '网关超时'
+        break
+      case 505:
+        message = 'HTTP版本不受支持'
+        break
+      default:
+        message = error.response.data?.message || '网络错误'
       }
     } else if (error.code === 'ECONNABORTED') {
       message = '请求超时'
     }
-    
+
     Message({
       message: message,
       type: 'error',
@@ -108,4 +108,4 @@ service.interceptors.response.use(
   }
 )
 
-export default service 
+export default service

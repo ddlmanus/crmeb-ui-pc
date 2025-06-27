@@ -6,24 +6,24 @@
         <div class="nav-item" :class="{ active: !selectedCategory }" @click="selectCategory(null)">
           全部
         </div>
-        <div 
-          v-for="category in categories" 
+        <div
+          v-for="category in categories"
           :key="category.id"
-          class="nav-item" 
+          class="nav-item"
           :class="{ active: selectedCategory === category.id }"
           @click="selectCategory(category.id)"
         >
           {{ category.name }}
         </div>
       </div>
-      
+
       <!-- 筛选和排序 -->
       <div class="filter-bar">
         <div class="filter-left">
           <span class="filter-label">分类：</span>
           <div class="filter-tags">
-            <el-button 
-              v-for="filter in filters" 
+            <el-button
+              v-for="filter in filters"
               :key="filter.value"
               :type="selectedFilter === filter.value ? 'primary' : ''"
               size="small"
@@ -43,11 +43,11 @@
           </el-select>
         </div>
       </div>
-      
+
       <!-- 商品列表 -->
       <div class="product-list" v-loading="loading">
-        <div 
-          v-for="product in productList" 
+        <div
+          v-for="product in productList"
           :key="product.id"
           class="product-item"
           @click="goToProductDetail(product.id)"
@@ -65,9 +65,9 @@
               </span>
             </div>
             <div class="product-actions">
-              <el-button 
-                type="primary" 
-                size="small" 
+              <el-button
+                type="primary"
+                size="small"
                 @click.stop="addToCart(product)"
                 :loading="product.adding"
               >
@@ -84,11 +84,11 @@
             <div class="product-meta">
               <span class="sales">{{ product.sales }}人付款</span>
               <div class="rating" v-if="product.rating">
-                <el-rate 
-                  v-model="product.rating" 
-                  disabled 
-                  show-score 
-                  text-color="#ff9900" 
+                <el-rate
+                  v-model="product.rating"
+                  disabled
+                  show-score
+                  text-color="#ff9900"
                   score-template="{value}"
                   class="product-rating"
                 />
@@ -97,7 +97,7 @@
           </div>
         </div>
       </div>
-      
+
       <!-- 分页 -->
       <div class="pagination-wrapper" v-if="total > 0">
         <el-pagination
@@ -279,13 +279,13 @@ export default {
     async loadData() {
       try {
         this.loading = true
-        
+
         // 根据路由参数设置当前分类
         const categoryId = this.$route.params.categoryId
         if (categoryId) {
           this.selectedCategory = parseInt(categoryId)
         }
-        
+
         // 加载分类列表
         try {
           const categoryRes = await getCategoryList()
@@ -298,7 +298,7 @@ export default {
         } catch (error) {
           console.error('加载分类失败:', error)
         }
-        
+
         // 加载商品数据
         try {
           let productRes
@@ -315,11 +315,11 @@ export default {
               limit: this.pageSize
             })
           }
-          
+
           if (productRes.code === 200 && productRes.data) {
             this.productList = productRes.data.list || productRes.data || []
             this.total = productRes.data.total || this.productList.length
-            
+
             // 转换数据格式
             this.productList = this.productList.map(product => ({
               id: product.id,
@@ -336,7 +336,7 @@ export default {
         } catch (error) {
           console.error('加载商品数据失败:', error)
         }
-        
+
       } catch (error) {
         console.error('加载数据失败:', error)
         this.$message.error('加载数据失败，请稍后重试')
@@ -347,13 +347,13 @@ export default {
     selectCategory(categoryId) {
       this.selectedCategory = categoryId
       this.currentPage = 1
-      
+
       if (categoryId) {
         this.$router.push(`/product/category/${categoryId}`)
       } else {
         this.$router.push('/product/category')
       }
-      
+
       this.loadData()
     },
     selectFilter(filter) {
@@ -371,17 +371,17 @@ export default {
     async addToCart(product) {
       try {
         product.adding = true
-        
+
         // 调用添加购物车API
         await addCartItem({
           productId: product.id,
           quantity: 1,
           skuId: null
         })
-        
+
         // 更新购物车数量
         await this.getCartCount()
-        
+
         this.$message.success('添加购物车成功')
       } catch (error) {
         console.error('添加购物车失败:', error)
@@ -407,13 +407,13 @@ export default {
 .category-page {
   background: #f5f5f5;
   min-height: calc(100vh - 160px);
-  
+
   .container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
   }
-  
+
   // 分类导航
   .category-nav {
     display: flex;
@@ -421,25 +421,25 @@ export default {
     border-radius: 4px;
     margin-bottom: 20px;
     padding: 0 20px;
-    
+
     .nav-item {
       padding: 15px 20px;
       cursor: pointer;
       border-bottom: 3px solid transparent;
       color: #666;
       transition: all 0.3s;
-      
+
       &:hover {
         color: #f56c6c;
       }
-      
+
       &.active {
         color: #f56c6c;
         border-bottom-color: #f56c6c;
       }
     }
   }
-  
+
   // 筛选条
   .filter-bar {
     display: flex;
@@ -449,71 +449,71 @@ export default {
     padding: 15px 20px;
     border-radius: 4px;
     margin-bottom: 20px;
-    
+
     .filter-left {
       display: flex;
       align-items: center;
-      
+
       .filter-label {
         margin-right: 10px;
         color: #666;
       }
-      
+
       .filter-tags {
         display: flex;
         gap: 10px;
       }
     }
-    
+
     .filter-right {
       display: flex;
       align-items: center;
-      
+
       .filter-label {
         margin-right: 10px;
         color: #666;
       }
     }
   }
-  
+
   // 商品列表
   .product-list {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 20px;
     margin-bottom: 30px;
-    
+
     .product-item {
       background: white;
       border-radius: 8px;
       overflow: hidden;
       cursor: pointer;
       transition: all 0.3s;
-      
+
       &:hover {
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         transform: translateY(-2px);
-        
+
         .product-actions {
           opacity: 1;
         }
       }
-      
+
       .product-image {
         position: relative;
         height: 220px;
-        
+
         img {
           width: 100%;
           height: 100%;
           object-fit: cover;
         }
-        
+
         .product-labels {
           position: absolute;
           top: 10px;
           left: 10px;
-          
+
           .product-label {
             display: inline-block;
             padding: 2px 6px;
@@ -521,25 +521,25 @@ export default {
             color: white;
             border-radius: 2px;
             margin-right: 5px;
-            
+
             &.hot {
               background: #f56c6c;
             }
-            
+
             &.new {
               background: #67c23a;
             }
-            
+
             &.sale {
               background: #e6a23c;
             }
-            
+
             &.coupon {
               background: #409eff;
             }
           }
         }
-        
+
         .product-actions {
           position: absolute;
           bottom: 10px;
@@ -549,10 +549,10 @@ export default {
           transition: all 0.3s;
         }
       }
-      
+
       .product-info {
         padding: 15px;
-        
+
         .product-name {
           font-size: 14px;
           color: #333;
@@ -565,16 +565,16 @@ export default {
           -webkit-box-orient: vertical;
           height: 40px;
         }
-        
+
         .price-group {
           margin-bottom: 8px;
-          
+
           .current-price {
             color: #f56c6c;
             font-size: 18px;
             font-weight: bold;
           }
-          
+
           .original-price {
             color: #999;
             text-decoration: line-through;
@@ -582,23 +582,23 @@ export default {
             font-size: 14px;
           }
         }
-        
+
         .product-meta {
           display: flex;
           justify-content: space-between;
           align-items: center;
           font-size: 12px;
           color: #999;
-          
+
           .product-rating {
             ::v-deep .el-rate {
               height: 14px;
               line-height: 14px;
-              
+
               .el-rate__item {
                 font-size: 12px;
               }
-              
+
               .el-rate__text {
                 font-size: 12px;
                 margin-left: 4px;
@@ -609,7 +609,7 @@ export default {
       }
     }
   }
-  
+
   // 分页
   .pagination-wrapper {
     display: flex;
@@ -626,22 +626,22 @@ export default {
     .category-nav {
       overflow-x: auto;
       white-space: nowrap;
-      
+
       .nav-item {
         flex-shrink: 0;
       }
     }
-    
+
     .filter-bar {
       flex-direction: column;
       align-items: flex-start;
       gap: 15px;
     }
-    
+
     .product-list {
       grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
       gap: 15px;
     }
   }
 }
-</style> 
+</style>

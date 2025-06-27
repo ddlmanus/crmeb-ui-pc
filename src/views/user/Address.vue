@@ -169,7 +169,7 @@ export default {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
-  
+
   h2 {
     margin: 0;
     color: #333;
@@ -194,55 +194,55 @@ export default {
   padding: 20px;
   transition: all 0.3s ease;
   cursor: pointer;
-  
+
   &:hover {
     border-color: #409eff;
     box-shadow: 0 2px 12px rgba(64, 158, 255, 0.1);
   }
-  
+
   &.is-default {
     border-color: #67c23a;
     background: #f0f9ff;
   }
-  
+
   .address-info {
     flex: 1;
-    
+
     .user-info {
       display: flex;
       align-items: center;
       gap: 15px;
       margin-bottom: 10px;
-      
+
       .name {
         font-weight: bold;
         color: #333;
         font-size: 16px;
       }
-      
+
       .phone {
         color: #666;
         font-size: 14px;
       }
     }
-    
+
     .address-detail {
       color: #666;
       line-height: 1.6;
       font-size: 14px;
     }
   }
-  
+
   .address-actions {
     display: flex;
     gap: 15px;
     margin-top: 15px;
     padding-top: 15px;
     border-top: 1px solid #f0f0f0;
-    
+
     .delete-btn {
       color: #f56c6c;
-      
+
       &:hover {
         color: #f56c6c;
       }
@@ -253,19 +253,19 @@ export default {
 .empty-address {
   text-align: center;
   padding: 80px 20px;
-  
+
   .empty-icon {
     font-size: 80px;
     color: #ddd;
     margin-bottom: 20px;
   }
-  
+
   .empty-text {
     font-size: 18px;
     color: #333;
     margin-bottom: 10px;
   }
-  
+
   .empty-desc {
     color: #666;
     margin-bottom: 30px;
@@ -278,23 +278,23 @@ export default {
     align-items: flex-start;
     gap: 15px;
   }
-  
+
   .address-item {
     padding: 15px;
-    
+
     .address-actions {
       flex-direction: column;
       gap: 10px;
-      
+
       .el-button {
         width: 100%;
         margin: 0;
       }
     }
   }
-  
+
   .address-content {
     padding: 15px;
   }
 }
-</style> 
+</style>

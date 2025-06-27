@@ -29,7 +29,7 @@
             <span class="order-no">订单编号：{{ orderInfo.orderSn }}</span>
             <span class="order-time">下单时间：{{ orderInfo.createTime }}</span>
           </div>
-          
+
           <div class="goods-list">
             <div class="goods-item" v-for="item in orderInfo.cartInfo" :key="item.id">
               <img :src="item.productInfo.image" :alt="item.productInfo.storeName" class="goods-image">
@@ -45,9 +45,9 @@
               </div>
               <div class="item-actions">
                 <label class="checkbox-label">
-                  <input 
-                    type="checkbox" 
-                    :value="item.id" 
+                  <input
+                    type="checkbox"
+                    :value="item.id"
                     v-model="selectedItems"
                     @change="updateRefundAmount"
                   >
@@ -70,7 +70,7 @@
               <div class="option-desc">未收到货，或商品有问题不用退货只退款</div>
             </div>
           </label>
-          
+
           <label class="radio-option" :class="{ active: refundForm.type === 2 }">
             <input type="radio" :value="2" v-model="refundForm.type">
             <div class="option-content">
@@ -85,9 +85,9 @@
       <div class="refund-reason">
         <h3>退款原因</h3>
         <div class="reason-list">
-          <label 
-            class="reason-item" 
-            v-for="reason in refundReasons" 
+          <label
+            class="reason-item"
+            v-for="reason in refundReasons"
             :key="reason.id"
             :class="{ active: refundForm.reasonId === reason.id }"
           >
@@ -111,8 +111,8 @@
           </div>
           <div class="amount-input">
             <label>申请退款金额：</label>
-            <input 
-              type="number" 
+            <input
+              type="number"
               v-model="refundForm.refundPrice"
               :max="calculatedRefundAmount"
               step="0.01"
@@ -126,7 +126,7 @@
       <!-- 问题描述 -->
       <div class="refund-description">
         <h3>问题描述</h3>
-        <textarea 
+        <textarea
           v-model="refundForm.explain"
           placeholder="请详细描述问题，有助于客服快速处理（选填）"
           maxlength="500"
@@ -148,12 +148,12 @@
               <div class="upload-text">上传图片</div>
             </div>
           </div>
-          <input 
-            type="file" 
-            ref="fileInput" 
-            @change="handleImageUpload" 
-            accept="image/*" 
-            multiple 
+          <input
+            type="file"
+            ref="fileInput"
+            @change="handleImageUpload"
+            accept="image/*"
+            multiple
             style="display: none"
           >
           <div class="upload-tips">
@@ -170,8 +170,8 @@
         </div>
         <div class="submit-actions">
           <button @click="goBack" class="btn-cancel">返回</button>
-          <button 
-            @click="submitRefund" 
+          <button
+            @click="submitRefund"
             class="btn-submit"
             :disabled="!canSubmit || loading"
           >
@@ -207,7 +207,7 @@ export default {
   computed: {
     calculatedRefundAmount() {
       if (this.selectedItems.length === 0) return 0
-      
+
       let amount = 0
       this.orderInfo.cartInfo?.forEach(item => {
         if (this.selectedItems.includes(item.id)) {
@@ -217,8 +217,8 @@ export default {
       return amount.toFixed(2)
     },
     canSubmit() {
-      return this.selectedItems.length > 0 && 
-             this.refundForm.reasonId && 
+      return this.selectedItems.length > 0 &&
+             this.refundForm.reasonId &&
              this.refundForm.refundPrice > 0 &&
              this.refundForm.refundPrice <= this.calculatedRefundAmount
     }
@@ -301,7 +301,7 @@ export default {
       }
 
       this.loading = true
-      
+
       try {
         await applyRefund({
           orderId: this.orderInfo.id,
@@ -798,7 +798,7 @@ export default {
   .refund-apply-container {
     padding: 15px;
   }
-  
+
   .refund-header,
   .order-info,
   .refund-type,
@@ -809,25 +809,25 @@ export default {
   .submit-section {
     padding: 20px;
   }
-  
+
   .goods-item {
     flex-direction: column;
     text-align: center;
   }
-  
+
   .goods-image {
     margin: 0 0 15px 0;
   }
-  
+
   .order-header {
     flex-direction: column;
     gap: 10px;
   }
-  
+
   .reason-list {
     grid-template-columns: 1fr;
   }
-  
+
   .submit-actions {
     flex-direction: column;
   }

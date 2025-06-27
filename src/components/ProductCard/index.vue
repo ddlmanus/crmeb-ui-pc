@@ -33,19 +33,19 @@
         ></el-button>
       </div>
     </div>
-    
+
     <div class="product-info">
       <h3 class="product-title" :title="product.storeName">
         {{ product.storeName }}
       </h3>
-      
+
       <div class="product-price">
         <span class="current-price">¥{{ product.price }}</span>
         <span class="original-price" v-if="product.otPrice && product.otPrice > product.price">
           ¥{{ product.otPrice }}
         </span>
       </div>
-      
+
       <div class="product-meta">
         <div class="sales-info">
           <span class="sales">已售{{ product.sales || 0 }}件</span>
@@ -61,7 +61,7 @@
             ></el-rate>
           </div>
         </div>
-        
+
         <div class="product-tags" v-if="product.tags && product.tags.length">
           <el-tag
             v-for="tag in product.tags.slice(0, 2)"
@@ -128,7 +128,7 @@ export default {
           this.$router.push(`/product/detail/${this.product.id}`)
           return
         }
-        
+
         // 单规格直接加入购物车
         await this.$store.dispatch('cart/addToCart', {
           productId: this.product.id,
@@ -161,11 +161,11 @@ export default {
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  
+
   &:hover {
     transform: translateY(-5px);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-    
+
     .product-actions {
       opacity: 1;
       visibility: visible;
@@ -177,14 +177,14 @@ export default {
   position: relative;
   height: 240px;
   overflow: hidden;
-  
+
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     transition: transform 0.3s ease;
   }
-  
+
   &:hover img {
     transform: scale(1.05);
   }
@@ -195,7 +195,7 @@ export default {
   top: 10px;
   left: 10px;
   z-index: 2;
-  
+
   .label {
     display: inline-block;
     width: 20px;
@@ -206,19 +206,19 @@ export default {
     font-size: 12px;
     border-radius: 2px;
     margin-right: 4px;
-    
+
     &.hot {
       background-color: #ff4757;
     }
-    
+
     &.new {
       background-color: #5dade2;
     }
-    
+
     &.benefit {
       background-color: #26de81;
     }
-    
+
     &.best {
       background-color: #ffa502;
     }
@@ -234,17 +234,17 @@ export default {
   visibility: hidden;
   transition: all 0.3s ease;
   z-index: 3;
-  
+
   .action-btn {
     margin: 0 5px;
     background-color: rgba(255, 255, 255, 0.9);
     border: none;
-    
+
     &:hover {
       background-color: #409eff;
       color: #fff;
     }
-    
+
     &.is-collected {
       color: #ff9900;
     }
@@ -266,7 +266,7 @@ export default {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   cursor: pointer;
-  
+
   &:hover {
     color: #409eff;
   }
@@ -274,13 +274,13 @@ export default {
 
 .product-price {
   margin-bottom: 10px;
-  
+
   .current-price {
     color: #ff4757;
     font-size: 18px;
     font-weight: bold;
   }
-  
+
   .original-price {
     color: #999;
     font-size: 14px;
@@ -295,16 +295,16 @@ export default {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 8px;
-    
+
     .sales {
       color: #666;
       font-size: 12px;
     }
-    
+
     .rating {
       ::v-deep .el-rate {
         height: auto;
-        
+
         .el-rate__text {
           font-size: 12px;
           color: #999;
@@ -312,11 +312,11 @@ export default {
       }
     }
   }
-  
+
   .product-tags {
     .el-tag {
       margin-right: 5px;
-      
+
       &:last-child {
         margin-right: 0;
       }
@@ -328,7 +328,7 @@ export default {
   .product-image {
     height: 180px;
   }
-  
+
   .product-actions {
     opacity: 1;
     visibility: visible;
@@ -336,20 +336,20 @@ export default {
     right: 10px;
     left: auto;
     transform: none;
-    
+
     .action-btn {
       display: block;
       margin: 5px 0;
     }
   }
-  
+
   .product-title {
     font-size: 13px;
     height: 36px;
   }
-  
+
   .product-price .current-price {
     font-size: 16px;
   }
 }
-</style> 
+</style>

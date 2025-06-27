@@ -42,7 +42,7 @@ export default {
       // 去重处理，避免相同路径的重复项
       const uniqueMatched = []
       const seenPaths = new Set()
-      
+
       matched.forEach(item => {
         const key = item.path || item.name
         if (!seenPaths.has(key) && item.meta && item.meta.title && item.meta.breadcrumb !== false) {
@@ -84,4 +84,4 @@ export default {
     cursor: text;
   }
 }
-</style> 
+</style>

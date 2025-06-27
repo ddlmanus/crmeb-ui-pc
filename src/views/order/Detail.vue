@@ -1,26 +1,27 @@
 <template>
   <div class="order-detail-page">
     <div class="container">
+      <!-- 页面头部 -->
       <div class="page-header">
         <div class="header-left">
-          <el-button @click="$router.go(-1)" icon="el-icon-arrow-left">返回</el-button>
+          <el-button @click="$router.go(-1)" icon="el-icon-arrow-left" size="medium">返回</el-button>
           <h2>订单详情</h2>
         </div>
-        <div class="order-status">
+        <div class="order-status" v-if="orderInfo.orderNo">
           <el-tag :type="getStatusType(orderInfo.status)" size="large">
             {{ getStatusText(orderInfo.status) }}
           </el-tag>
         </div>
       </div>
 
-      <div v-if="orderInfo.orderSn" class="order-content">
+      <div v-if="orderInfo.orderNo" class="order-content">
         <!-- 订单状态步骤条 -->
         <div class="status-steps">
           <el-steps :active="getStepActive(orderInfo.status)" align-center>
             <el-step title="提交订单" :description="formatTime(orderInfo.createTime)"></el-step>
             <el-step title="付款成功" :description="orderInfo.payTime ? formatTime(orderInfo.payTime) : ''"></el-step>
-            <el-step title="商品出库" :description="orderInfo.deliveryTime ? formatTime(orderInfo.deliveryTime) : ''"></el-step>
-            <el-step title="确认收货" :description="orderInfo.receiveTime ? formatTime(orderInfo.receiveTime) : ''"></el-step>
+            <el-step title="商品出库" description=""></el-step>
+            <el-step title="确认收货" description=""></el-step>
           </el-steps>
         </div>
 
@@ -34,7 +35,7 @@
             <div class="info-grid">
               <div class="info-item">
                 <span class="label">订单编号：</span>
-                <span class="value">{{ orderInfo.orderSn }}</span>
+                <span class="value">{{ orderInfo.orderNo }}</span>
               </div>
               <div class="info-item">
                 <span class="label">下单时间：</span>
@@ -45,44 +46,51 @@
                 <span class="value">{{ getPayTypeText(orderInfo.payType) }}</span>
               </div>
               <div class="info-item">
-                <span class="label">配送方式：</span>
-                <span class="value">{{ orderInfo.deliveryType === 1 ? '快递配送' : '到店自提' }}</span>
+                <span class="label">支付状态：</span>
+                <span class="value">{{ orderInfo.paid ? '已支付' : '未支付' }}</span>
               </div>
-              <div class="info-item" v-if="orderInfo.remark">
-                <span class="label">订单备注：</span>
-                <span class="value">{{ orderInfo.remark }}</span>
+              <div class="info-item" v-if="orderInfo.payTime">
+                <span class="label">支付时间：</span>
+                <span class="value">{{ formatTime(orderInfo.payTime) }}</span>
+              </div>
+              <div class="info-item">
+                <span class="label">订单类型：</span>
+                <span class="value">{{ getOrderTypeText(orderInfo.type) }}</span>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- 收货地址信息 -->
-        <div class="section address-section">
+        <!-- 商户订单列表 -->
+        <div v-for="(merchantOrder, index) in orderInfo.merchantOrderList" :key="index" class="section merchant-section">
           <div class="section-title">
-            <i class="el-icon-location"></i>
-            收货地址
+            <i class="el-icon-shop"></i>
+            {{ merchantOrder.merName || '商户订单' }}
+            <span class="merchant-tag" v-if="merchantOrder.isSelf">自营</span>
           </div>
+
+          <!-- 收货地址信息 -->
           <div class="address-content">
             <div class="address-card">
               <div class="address-info">
                 <div class="user-info">
-                  <span class="name">{{ orderInfo.realName }}</span>
-                  <span class="phone">{{ orderInfo.userPhone }}</span>
+                  <span class="name">{{ merchantOrder.realName }}</span>
+                  <span class="phone">{{ merchantOrder.userPhone }}</span>
                 </div>
                 <div class="address-detail">
-                  {{ orderInfo.userAddress }}
+                  {{ merchantOrder.userAddress }}
+                </div>
+                <div class="shipping-type">
+                  配送方式：{{ getShippingTypeText(merchantOrder.shippingType) }}
+                </div>
+                <div v-if="merchantOrder.verifyCode" class="verify-code">
+                  核销码：<span class="code">{{ merchantOrder.verifyCode }}</span>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- 商品信息 -->
-        <div class="section goods-section">
-          <div class="section-title">
-            <i class="el-icon-goods"></i>
-            商品信息
-          </div>
+          <!-- 商品列表 -->
           <div class="goods-list">
             <div class="goods-header">
               <div class="col-product">商品信息</div>
@@ -90,9 +98,9 @@
               <div class="col-quantity">数量</div>
               <div class="col-total">小计</div>
             </div>
-            <div 
-              v-for="item in orderInfo.orderDetailList" 
-              :key="item.id" 
+            <div
+              v-for="item in merchantOrder.orderInfoList"
+              :key="item.id"
               class="goods-item"
             >
               <div class="col-product">
@@ -103,6 +111,9 @@
                     <div class="product-specs" v-if="item.sku">
                       {{ item.sku }}
                     </div>
+                    <div class="product-type">
+                      {{ getProductTypeText(item.productType) }}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -111,57 +122,74 @@
               <div class="col-total">¥{{ (item.price * item.payNum).toFixed(2) }}</div>
             </div>
           </div>
-        </div>
 
-        <!-- 费用明细 -->
-        <div class="section cost-section">
-          <div class="section-title">
-            <i class="el-icon-wallet"></i>
-            费用明细
-          </div>
+          <!-- 商户订单费用明细 -->
           <div class="cost-content">
             <div class="cost-list">
               <div class="cost-item">
                 <span class="label">商品金额：</span>
-                <span class="value">¥{{ orderInfo.totalPrice }}</span>
+                <span class="value">¥{{ merchantOrder.proTotalPrice }}</span>
               </div>
               <div class="cost-item">
                 <span class="label">运费：</span>
-                <span class="value">¥{{ orderInfo.shippingFee || '0.00' }}</span>
+                <span class="value">¥{{ merchantOrder.totalPostage || '0.00' }}</span>
               </div>
-              <div class="cost-item" v-if="orderInfo.couponPrice > 0">
+              <div class="cost-item" v-if="merchantOrder.couponPrice > 0">
                 <span class="label">优惠券：</span>
-                <span class="value discount">-¥{{ orderInfo.couponPrice }}</span>
+                <span class="value discount">-¥{{ merchantOrder.couponPrice }}</span>
+              </div>
+              <div class="cost-item" v-if="merchantOrder.integralPrice > 0">
+                <span class="label">积分抵扣：</span>
+                <span class="value discount">-¥{{ merchantOrder.integralPrice }}</span>
+              </div>
+              <div class="cost-item" v-if="merchantOrder.svipDiscountPrice > 0">
+                <span class="label">会员优惠：</span>
+                <span class="value discount">-¥{{ merchantOrder.svipDiscountPrice }}</span>
               </div>
               <div class="cost-item total">
-                <span class="label">实付金额：</span>
-                <span class="value">¥{{ orderInfo.payPrice }}</span>
+                <span class="label">小计：</span>
+                <span class="value">¥{{ merchantOrder.payPrice }}</span>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- 物流信息 -->
-        <div v-if="orderInfo.status >= 2" class="section logistics-section">
+        <!-- 订单总费用明细 -->
+        <div class="section total-cost-section">
           <div class="section-title">
-            <i class="el-icon-truck"></i>
-            物流信息
+            <i class="el-icon-wallet"></i>
+            订单总费用
           </div>
-          <div class="logistics-content">
-            <div v-if="logisticsInfo && logisticsInfo.length" class="logistics-list">
-              <div 
-                v-for="(item, index) in logisticsInfo" 
-                :key="index" 
-                class="logistics-item"
-                :class="{ first: index === 0 }"
-              >
-                <div class="logistics-time">{{ item.time }}</div>
-                <div class="logistics-status">{{ item.status }}</div>
+          <div class="cost-content">
+            <div class="cost-list">
+              <div class="cost-item">
+                <span class="label">商品总金额：</span>
+                <span class="value">¥{{ orderInfo.proTotalPrice }}</span>
               </div>
-            </div>
-            <div v-else class="no-logistics">
-              <span>暂无物流信息</span>
-              <el-button type="text" @click="fetchLogistics">刷新物流</el-button>
+              <div class="cost-item">
+                <span class="label">总运费：</span>
+                <span class="value">¥{{ orderInfo.totalPostage || '0.00' }}</span>
+              </div>
+              <div class="cost-item" v-if="orderInfo.platCouponPrice > 0">
+                <span class="label">平台优惠券：</span>
+                <span class="value discount">-¥{{ orderInfo.platCouponPrice }}</span>
+              </div>
+              <div class="cost-item" v-if="orderInfo.merCouponPrice > 0">
+                <span class="label">商户优惠券：</span>
+                <span class="value discount">-¥{{ orderInfo.merCouponPrice }}</span>
+              </div>
+              <div class="cost-item" v-if="orderInfo.integralPrice > 0">
+                <span class="label">积分抵扣：</span>
+                <span class="value discount">-¥{{ orderInfo.integralPrice }} ({{ orderInfo.useIntegral }}积分)</span>
+              </div>
+              <div class="cost-item" v-if="orderInfo.svipDiscountPrice > 0">
+                <span class="label">会员优惠：</span>
+                <span class="value discount">-¥{{ orderInfo.svipDiscountPrice }}</span>
+              </div>
+              <div class="cost-item total-final">
+                <span class="label">实付金额：</span>
+                <span class="value">¥{{ orderInfo.payPrice }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -174,27 +202,32 @@
               <el-button @click="handleCancel">取消订单</el-button>
               <el-button type="primary" @click="handlePay">立即付款</el-button>
             </template>
-            
+
+            <!-- 待发货 -->
+            <template v-if="orderInfo.status === 1">
+              <el-button @click="handleCancel">取消订单</el-button>
+            </template>
+
             <!-- 待收货 -->
-            <template v-if="orderInfo.status === 2">
+            <template v-if="orderInfo.status === 4">
               <el-button @click="handleViewLogistics">查看物流</el-button>
               <el-button type="primary" @click="handleConfirm">确认收货</el-button>
             </template>
-            
-            <!-- 待评价 -->
-            <template v-if="orderInfo.status === 3">
+
+            <!-- 已收货/待评价 -->
+            <template v-if="orderInfo.status === 5">
               <el-button @click="handleRefund">申请售后</el-button>
               <el-button type="primary" @click="handleReview">去评价</el-button>
             </template>
-            
+
             <!-- 已完成 -->
-            <template v-if="orderInfo.status === 4">
+            <template v-if="orderInfo.status === 6">
               <el-button @click="handleRefund">申请售后</el-button>
               <el-button @click="handleDelete">删除订单</el-button>
             </template>
-            
+
             <!-- 已取消 -->
-            <template v-if="orderInfo.status === -1">
+            <template v-if="orderInfo.status === 9">
               <el-button @click="handleDelete">删除订单</el-button>
             </template>
           </div>
@@ -229,7 +262,6 @@ export default {
   data() {
     return {
       orderInfo: {},
-      logisticsInfo: [],
       loading: false
     }
   },
@@ -241,39 +273,22 @@ export default {
       try {
         this.loading = true
         const orderSn = this.$route.params.orderSn
-        const response = await getOrderDetail(orderSn)
+        console.log('获取订单详情，订单号:', orderSn)
         
-        if (response.code === 200) {
+        const response = await getOrderDetail(orderSn)
+        console.log('订单详情响应:', response)
+
+        if (response.code === 200 && response.data) {
           this.orderInfo = response.data
-          // 如果订单已发货，获取物流信息
-          if (this.orderInfo.status >= 2) {
-            this.fetchLogistics()
-          }
+          console.log('订单信息:', this.orderInfo)
+        } else {
+          console.error('订单详情接口返回错误:', response)
         }
       } catch (error) {
         console.error('获取订单详情失败:', error)
         this.$message.error('获取订单详情失败')
       } finally {
         this.loading = false
-      }
-    },
-
-    async fetchLogistics() {
-      try {
-        // 这里调用物流查询接口
-        // const response = await getLogisticsInfo(this.orderInfo.orderSn)
-        // this.logisticsInfo = response.data || []
-        
-        // 模拟物流数据
-        this.logisticsInfo = [
-          { time: '2024-01-15 10:30:00', status: '商品已送达，感谢您的信任！' },
-          { time: '2024-01-15 08:20:00', status: '快递员正在配送中，请保持手机畅通' },
-          { time: '2024-01-14 16:45:00', status: '商品已到达本市分拣中心' },
-          { time: '2024-01-14 09:15:00', status: '商品已发出，正在运输途中' },
-          { time: '2024-01-13 14:30:00', status: '商品已打包，准备发货' }
-        ]
-      } catch (error) {
-        console.error('获取物流信息失败:', error)
       }
     },
 
@@ -285,7 +300,7 @@ export default {
           type: 'warning'
         })
 
-        await cancelOrder(this.orderInfo.orderSn)
+        await cancelOrder(this.orderInfo.orderNo)
         this.$message.success('订单取消成功')
         this.fetchOrderDetail()
       } catch (error) {
@@ -297,7 +312,7 @@ export default {
     },
 
     handlePay() {
-      this.$router.push(`/order/pay/${this.orderInfo.orderSn}`)
+      this.$router.push(`/order/pay/${this.orderInfo.orderNo}?totalPrice=${this.orderInfo.payPrice}&orderNo=${this.orderInfo.orderNo}`)
     },
 
     async handleConfirm() {
@@ -308,7 +323,7 @@ export default {
           type: 'warning'
         })
 
-        await confirmOrder(this.orderInfo.orderSn)
+        await confirmOrder(this.orderInfo.orderNo)
         this.$message.success('确认收货成功')
         this.fetchOrderDetail()
       } catch (error) {
@@ -320,11 +335,11 @@ export default {
     },
 
     handleViewLogistics() {
-      this.$router.push(`/order/logistics/${this.orderInfo.orderSn}`)
+      this.$router.push(`/order/logistics/${this.orderInfo.orderNo}`)
     },
 
     handleReview() {
-      this.$router.push(`/order/review/${this.orderInfo.orderSn}`)
+      this.$router.push(`/order/review/${this.orderInfo.orderNo}`)
     },
 
     handleRefund() {
@@ -339,7 +354,7 @@ export default {
           type: 'warning'
         })
 
-        await deleteOrder(this.orderInfo.orderSn)
+        await deleteOrder(this.orderInfo.orderNo)
         this.$message.success('订单删除成功')
         this.$router.push('/order/list')
       } catch (error) {
@@ -352,12 +367,14 @@ export default {
 
     getStatusType(status) {
       const typeMap = {
-        0: 'warning',
-        1: 'primary',
-        2: 'primary',
-        3: 'success',
-        4: 'success',
-        '-1': 'info'
+        0: 'warning',   // 待支付
+        1: 'primary',   // 待发货
+        2: 'primary',   // 部分发货
+        3: 'primary',   // 待核销
+        4: 'primary',   // 待收货
+        5: 'success',   // 已收货
+        6: 'success',   // 已完成
+        9: 'info'       // 已取消
       }
       return typeMap[status] || 'info'
     },
@@ -366,20 +383,22 @@ export default {
       const textMap = {
         0: '待支付',
         1: '待发货',
-        2: '待收货',
-        3: '待评价',
-        4: '已完成',
-        '-1': '已取消'
+        2: '部分发货',
+        3: '待核销',
+        4: '待收货',
+        5: '已收货',
+        6: '已完成',
+        9: '已取消'
       }
       return textMap[status] || '未知状态'
     },
 
     getStepActive(status) {
-      if (status === -1) return 0
-      if (status === 0) return 1
-      if (status === 1) return 2
-      if (status === 2) return 3
-      if (status >= 3) return 4
+      if (status === 9) return 0  // 已取消
+      if (status === 0) return 1  // 待支付
+      if (status === 1) return 2  // 待发货
+      if (status === 2 || status === 3 || status === 4) return 3  // 已发货
+      if (status >= 5) return 4   // 已完成
       return 0
     },
 
@@ -390,6 +409,36 @@ export default {
         'yue': '余额支付'
       }
       return typeMap[payType] || '未知支付方式'
+    },
+
+    getOrderTypeText(type) {
+      const typeMap = {
+        0: '普通订单',
+        1: '秒杀订单',
+        2: '拼团订单'
+      }
+      return typeMap[type] || '未知类型'
+    },
+
+    getShippingTypeText(shippingType) {
+      const typeMap = {
+        1: '快递配送',
+        2: '门店自提',
+        3: '虚拟发货'
+      }
+      return typeMap[shippingType] || '未知配送方式'
+    },
+
+    getProductTypeText(productType) {
+      const typeMap = {
+        0: '普通商品',
+        1: '积分商品',
+        2: '虚拟商品',
+        4: '视频号商品',
+        5: '云盘商品',
+        6: '卡密商品'
+      }
+      return typeMap[productType] || ''
     },
 
     formatTime(time) {
@@ -417,111 +466,149 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  background: #fff;
+  padding: 20px 24px;
+  border-radius: 8px;
   margin-bottom: 20px;
-  
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
   .header-left {
     display: flex;
     align-items: center;
-    gap: 15px;
-    
+    gap: 16px;
+
     h2 {
       margin: 0;
+      font-size: 20px;
+      font-weight: 600;
       color: #333;
+    }
+  }
+
+  .order-status {
+    .el-tag {
+      font-size: 14px;
+      padding: 8px 16px;
     }
   }
 }
 
 .status-steps {
   background: #fff;
+  padding: 30px 24px;
   border-radius: 8px;
-  padding: 30px;
   margin-bottom: 20px;
-  
-  ::v-deep .el-steps {
-    .el-step__title {
-      font-size: 14px;
-      font-weight: bold;
-    }
-    
-    .el-step__description {
-      font-size: 12px;
-      color: #999;
-    }
-  }
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .section {
   background: #fff;
   border-radius: 8px;
   margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   overflow: hidden;
-  
+
   .section-title {
+    background: #fafafa;
+    padding: 16px 24px;
+    border-bottom: 1px solid #eee;
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 20px;
-    background: #fafafa;
-    border-bottom: 1px solid #f0f0f0;
-    font-weight: bold;
-    color: #333;
-    
+    gap: 8px;
+
     i {
-      color: #409eff;
+      color: #ff6600;
+    }
+
+    .merchant-tag {
+      background: #ff6600;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      margin-left: 8px;
     }
   }
 }
 
 .order-info-content {
-  padding: 20px;
-  
+  padding: 24px;
+
   .info-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 15px;
-    
+    gap: 16px;
+
     .info-item {
       display: flex;
       
       .label {
-        color: #666;
         min-width: 100px;
+        color: #666;
+        font-size: 14px;
       }
-      
+
       .value {
         color: #333;
-        flex: 1;
+        font-size: 14px;
+        font-weight: 500;
       }
     }
   }
 }
 
 .address-content {
-  padding: 20px;
-  
+  padding: 24px;
+
   .address-card {
-    border: 2px solid #f0f0f0;
+    border: 1px solid #e8e8e8;
     border-radius: 8px;
     padding: 20px;
     
-    .user-info {
-      display: flex;
-      gap: 20px;
-      margin-bottom: 10px;
-      
-      .name {
-        font-weight: bold;
+    .address-info {
+      .user-info {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 8px;
+
+        .name {
+          font-size: 16px;
+          font-weight: 600;
+          color: #333;
+        }
+
+        .phone {
+          color: #666;
+          font-size: 14px;
+        }
+      }
+
+      .address-detail {
         color: #333;
+        font-size: 14px;
+        margin-bottom: 8px;
       }
-      
-      .phone {
+
+      .shipping-type {
         color: #666;
+        font-size: 14px;
+        margin-bottom: 8px;
       }
-    }
-    
-    .address-detail {
-      color: #666;
-      line-height: 1.6;
+
+      .verify-code {
+        color: #666;
+        font-size: 14px;
+
+        .code {
+          color: #ff6600;
+          font-weight: 600;
+          font-family: monospace;
+        }
+      }
     }
   }
 }
@@ -529,235 +616,185 @@ export default {
 .goods-list {
   .goods-header {
     display: grid;
-    grid-template-columns: 1fr 120px 120px 120px;
-    padding: 15px 20px;
+    grid-template-columns: 2fr 120px 80px 120px;
+    gap: 16px;
+    padding: 16px 24px;
     background: #fafafa;
-    font-weight: bold;
+    border-bottom: 1px solid #eee;
+    font-weight: 600;
     color: #333;
-    border-bottom: 1px solid #f0f0f0;
+    font-size: 14px;
   }
-  
+
   .goods-item {
     display: grid;
-    grid-template-columns: 1fr 120px 120px 120px;
+    grid-template-columns: 2fr 120px 80px 120px;
+    gap: 16px;
+    padding: 20px 24px;
+    border-bottom: 1px solid #f0f0f0;
     align-items: center;
-    padding: 20px;
-    border-bottom: 1px solid #f5f5f5;
-    
+
     &:last-child {
       border-bottom: none;
     }
-  }
-  
-  .col-product {
-    .product-info {
-      display: flex;
-      gap: 15px;
-      
-      img {
-        width: 80px;
-        height: 80px;
-        object-fit: cover;
-        border-radius: 4px;
-      }
-      
-      .product-details {
-        flex: 1;
-        
-        h4 {
-          margin: 0 0 8px;
-          font-size: 14px;
-          color: #333;
-          line-height: 1.4;
+
+    .col-product {
+      .product-info {
+        display: flex;
+        gap: 12px;
+
+        img {
+          width: 80px;
+          height: 80px;
+          border-radius: 6px;
+          object-fit: cover;
         }
-        
-        .product-specs {
-          font-size: 12px;
-          color: #999;
+
+        .product-details {
+          flex: 1;
+
+          h4 {
+            margin: 0 0 8px 0;
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            line-height: 1.4;
+          }
+
+          .product-specs {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 4px;
+          }
+
+          .product-type {
+            font-size: 12px;
+            color: #ff6600;
+            background: #fff7f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            display: inline-block;
+          }
         }
       }
     }
-  }
-  
-  .col-price, .col-quantity, .col-total {
-    text-align: center;
-    color: #333;
-  }
-  
-  .col-total {
-    color: #ff4757;
-    font-weight: bold;
+
+    .col-price, .col-quantity, .col-total {
+      text-align: center;
+      font-size: 14px;
+      color: #333;
+    }
+
+    .col-price, .col-total {
+      font-weight: 600;
+      color: #ff6600;
+    }
   }
 }
 
 .cost-content {
-  padding: 20px;
-  
+  padding: 24px;
+
   .cost-list {
     max-width: 400px;
     margin-left: auto;
-    
+
     .cost-item {
       display: flex;
       justify-content: space-between;
       padding: 8px 0;
-      
+      font-size: 14px;
+
       .label {
         color: #666;
       }
-      
+
       .value {
         color: #333;
-        
-        &.discount {
-          color: #67c23a;
-        }
-      }
-      
-      &.total {
-        border-top: 1px solid #f0f0f0;
-        margin-top: 10px;
-        padding-top: 15px;
-        font-size: 16px;
-        font-weight: bold;
-        
-        .value {
-          color: #ff4757;
-        }
-      }
-    }
-  }
-}
+        font-weight: 500;
 
-.logistics-content {
-  padding: 20px;
-  
-  .logistics-list {
-    .logistics-item {
-      display: flex;
-      gap: 20px;
-      padding: 15px 0;
-      border-bottom: 1px solid #f5f5f5;
-      position: relative;
-      
-      &:last-child {
-        border-bottom: none;
-      }
-      
-      &.first {
-        .logistics-time {
-          color: #409eff;
-          font-weight: bold;
-        }
-        
-        .logistics-status {
-          color: #409eff;
+        &.discount {
+          color: #ff6600;
         }
       }
-      
-      .logistics-time {
-        min-width: 150px;
-        color: #666;
-        font-size: 14px;
+
+      &.total, &.total-final {
+        border-top: 1px solid #eee;
+        padding-top: 12px;
+        margin-top: 8px;
+        font-size: 16px;
+        font-weight: 600;
+
+        .value {
+          color: #ff6600;
+          font-size: 18px;
+        }
       }
-      
-      .logistics-status {
-        flex: 1;
-        color: #333;
-        line-height: 1.6;
+
+      &.total-final {
+        .value {
+          font-size: 20px;
+        }
       }
     }
-  }
-  
-  .no-logistics {
-    text-align: center;
-    padding: 40px;
-    color: #666;
   }
 }
 
 .action-section {
   background: #fff;
+  padding: 24px;
   border-radius: 8px;
-  padding: 20px;
-  text-align: center;
-  
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
   .action-buttons {
     display: flex;
-    gap: 15px;
     justify-content: center;
+    gap: 16px;
   }
 }
 
 .loading-state, .error-state {
+  text-align: center;
+  padding: 80px 20px;
   background: #fff;
   border-radius: 8px;
-  padding: 80px 20px;
-  text-align: center;
-  
-  .loading-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 15px;
-    color: #409eff;
-    
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+  .loading-content, .error-icon {
+    font-size: 48px;
+    color: #ccc;
+    margin-bottom: 16px;
+
     i {
-      font-size: 40px;
+      font-size: 48px;
     }
   }
-  
-  .error-icon {
-    font-size: 80px;
-    color: #ddd;
-    margin-bottom: 20px;
-  }
-  
+
   .error-text {
-    font-size: 18px;
-    color: #333;
-    margin-bottom: 30px;
+    font-size: 16px;
+    color: #666;
+    margin-bottom: 24px;
   }
 }
 
 @media (max-width: 768px) {
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
+  .goods-header, .goods-item {
+    grid-template-columns: 1fr;
+    gap: 8px;
   }
-  
-  .status-steps {
-    padding: 20px 15px;
+
+  .col-price, .col-quantity, .col-total {
+    text-align: left !important;
+    
+    &::before {
+      content: attr(data-label);
+      font-weight: 600;
+      margin-right: 8px;
+    }
   }
-  
+
   .info-grid {
     grid-template-columns: 1fr !important;
   }
-  
-  .goods-header, .goods-item {
-    grid-template-columns: 1fr 80px 80px 80px;
-    padding: 15px;
-    font-size: 12px;
-  }
-  
-  .col-product .product-info {
-    gap: 10px;
-    
-    img {
-      width: 60px;
-      height: 60px;
-    }
-    
-    .product-details h4 {
-      font-size: 13px;
-    }
-  }
-  
-  .action-buttons {
-    flex-direction: column;
-    max-width: 300px;
-    margin: 0 auto;
-  }
 }
-</style> 
+</style>

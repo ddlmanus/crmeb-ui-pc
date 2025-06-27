@@ -27,11 +27,11 @@
           </div>
         </div>
       </div>
-      
+
       <!-- 预售商品列表 -->
       <div class="presale-products">
-        <div 
-          v-for="product in presaleProducts" 
+        <div
+          v-for="product in presaleProducts"
           :key="product.id"
           class="presale-item"
           @click="goToProductDetail(product.id)"
@@ -56,8 +56,8 @@
               </div>
             </div>
             <div class="action-buttons">
-              <el-button 
-                type="primary" 
+              <el-button
+                type="primary"
                 size="small"
                 @click.stop="presaleBooking(product)"
                 :disabled="product.bookedPercentage >= 100 || currentStatus !== 'ongoing'"
@@ -135,21 +135,21 @@ export default {
       if (product.bookedPercentage >= 100 || this.currentStatus !== 'ongoing') {
         return
       }
-      
+
       try {
         product.booking = true
-        
+
         // 调用预售预定API
         // await bookPresaleProduct({
         //   productId: product.id,
         //   quantity: 1
         // })
-        
+
         this.$message.success('预定成功！')
-        
+
         // 更新预定进度
         product.bookedPercentage = Math.min(100, product.bookedPercentage + 5)
-        
+
       } catch (error) {
         console.error('预定失败:', error)
         this.$message.error('预定失败，请稍后重试')
@@ -165,17 +165,17 @@ export default {
 .presale-page {
   background: #f5f5f5;
   min-height: calc(100vh - 160px);
-  
+
   .container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
   }
-  
+
   // 预售头部
   .presale-header {
     margin-bottom: 30px;
-    
+
     .header-bg {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       border-radius: 12px;
@@ -183,15 +183,15 @@ export default {
       color: white;
       position: relative;
       overflow: hidden;
-      
+
       .header-content {
         position: relative;
         z-index: 1;
         text-align: center;
-        
+
         .presale-title {
           margin-bottom: 30px;
-          
+
           h2 {
             margin: 0;
             font-size: 32px;
@@ -199,28 +199,28 @@ export default {
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
           }
         }
-        
+
         .status-timeline {
           display: flex;
           justify-content: center;
           align-items: center;
-          
+
           .status-item {
             display: flex;
             flex-direction: column;
             align-items: center;
             opacity: 0.6;
             transition: all 0.3s;
-            
+
             &.active {
               opacity: 1;
-              
+
               .status-circle {
                 background: white;
                 box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
               }
             }
-            
+
             .status-circle {
               width: 16px;
               height: 16px;
@@ -229,13 +229,13 @@ export default {
               margin-bottom: 10px;
               transition: all 0.3s;
             }
-            
+
             span {
               font-size: 16px;
               white-space: nowrap;
             }
           }
-          
+
           .status-line {
             width: 100px;
             height: 2px;
@@ -247,13 +247,13 @@ export default {
       }
     }
   }
-  
+
   // 预售商品列表
   .presale-products {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 20px;
-    
+
     .presale-item {
       background: white;
       border-radius: 12px;
@@ -261,12 +261,12 @@ export default {
       cursor: pointer;
       transition: all 0.3s;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      
+
       &:hover {
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
         transform: translateY(-4px);
       }
-      
+
       .product-image {
         height: 200px;
         background: #f8f9fa;
@@ -274,13 +274,13 @@ export default {
         align-items: center;
         justify-content: center;
         position: relative;
-        
+
         img {
           max-width: 100%;
           max-height: 100%;
           object-fit: contain;
         }
-        
+
         .presale-badge {
           position: absolute;
           top: 10px;
@@ -293,10 +293,10 @@ export default {
           font-weight: bold;
         }
       }
-      
+
       .product-info {
         padding: 20px;
-        
+
         .product-name {
           font-size: 14px;
           color: #333;
@@ -309,16 +309,16 @@ export default {
           -webkit-box-orient: vertical;
           height: 42px;
         }
-        
+
         .price-group {
           margin-bottom: 15px;
-          
+
           .presale-price {
             color: #667eea;
             font-size: 24px;
             font-weight: bold;
           }
-          
+
           .original-price {
             color: #999;
             text-decoration: line-through;
@@ -326,33 +326,33 @@ export default {
             font-size: 16px;
           }
         }
-        
+
         .presale-progress {
           margin-bottom: 20px;
-          
+
           .progress-info {
             display: flex;
             justify-content: space-between;
             margin-bottom: 8px;
             font-size: 12px;
-            
+
             .progress-text {
               color: #667eea;
               font-weight: bold;
             }
-            
+
             .time-text {
               color: #666;
             }
           }
-          
+
           .progress-bar {
             width: 100%;
             height: 8px;
             background: #f0f0f0;
             border-radius: 4px;
             overflow: hidden;
-            
+
             .progress {
               height: 100%;
               background: linear-gradient(to right, #667eea, #764ba2);
@@ -360,27 +360,27 @@ export default {
             }
           }
         }
-        
+
         .action-buttons {
           text-align: center;
-          
+
           .el-button {
             width: 100%;
             height: 40px;
             font-size: 16px;
             font-weight: bold;
             border-radius: 20px;
-            
+
             &.el-button--primary {
               background: linear-gradient(135deg, #667eea, #764ba2);
               border: none;
-              
+
               &:hover:not(:disabled) {
                 background: linear-gradient(135deg, #5a6fd8, #6a419a);
                 transform: translateY(-1px);
                 box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
               }
-              
+
               &:disabled {
                 background: #c0c4cc;
                 color: white;
@@ -399,7 +399,7 @@ export default {
     .presale-header {
       .header-bg {
         padding: 25px 20px;
-        
+
         .status-timeline {
           .status-line {
             width: 60px;
@@ -408,11 +408,11 @@ export default {
         }
       }
     }
-    
+
     .presale-products {
       grid-template-columns: 1fr;
       gap: 15px;
     }
   }
 }
-</style> 
+</style>

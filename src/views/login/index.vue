@@ -63,21 +63,21 @@
           <div class="login-form">
             <div class="phone-input">
               <div class="country-code">+86</div>
-              <el-input 
-                v-model="phone" 
+              <el-input
+                v-model="phone"
                 placeholder="请输入手机号"
                 class="phone-field"
               />
             </div>
 
             <div class="verification-input">
-              <el-input 
-                v-model="verificationCode" 
+              <el-input
+                v-model="verificationCode"
                 placeholder="请输入验证码"
                 class="verification-field"
               />
-              <el-button 
-                type="primary" 
+              <el-button
+                type="primary"
                 class="get-code-btn"
                 :disabled="countdown > 0"
                 @click="getVerificationCode"
@@ -95,9 +95,9 @@
               </el-checkbox>
             </div>
 
-            <el-button 
-              type="primary" 
-              size="large" 
+            <el-button
+              type="primary"
+              size="large"
               class="login-btn"
               :loading="loginLoading"
               @click="handleLogin"
@@ -151,7 +151,7 @@ export default {
         this.$message.warning('请输入手机号')
         return
       }
-      
+
       // 开始倒计时
       this.countdown = 60
       const timer = setInterval(() => {
@@ -160,7 +160,7 @@ export default {
           clearInterval(timer)
         }
       }, 1000)
-      
+
       // TODO: 调用发送验证码API
       this.$message.success('验证码已发送')
     },
@@ -184,7 +184,7 @@ export default {
           phone: this.phone,
           code: this.verificationCode
         })
-        
+
         this.$message.success('登录成功')
         this.$router.push('/')
       } catch (error) {
@@ -561,14 +561,14 @@ export default {
   .login-main {
     flex-direction: column;
   }
-  
+
   .left-decoration {
     display: none;
   }
-  
+
   .login-form-container {
     width: 100%;
     padding: 20px;
   }
 }
-</style> 
+</style>

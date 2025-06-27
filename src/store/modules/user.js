@@ -41,7 +41,7 @@ const actions = {
         resolve(loginData)
         return
       }
-      
+
       // 兼容旧的登录方式
       login(loginData).then(response => {
         const { data } = response
@@ -140,4 +140,4 @@ export default {
   mutations,
   actions,
   getters
-} 
+}

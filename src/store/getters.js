@@ -19,4 +19,4 @@ const getters = {
   categories: state => state.product.categories,
   hotKeywords: state => state.product.hotKeywords
 }
-export default getters 
+export default getters

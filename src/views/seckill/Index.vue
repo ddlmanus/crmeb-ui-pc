@@ -39,42 +39,60 @@
           </div>
         </div>
       </div>
-      
+
+      <!-- 加载状态 -->
+      <div v-if="loading" class="loading-section">
+        <el-loading :spinning="true" tip="加载中...">
+          <div style="height: 400px;"></div>
+        </el-loading>
+      </div>
+
+      <!-- 无数据状态 -->
+      <div v-else-if="!loading && seckillProducts.length === 0" class="empty-section">
+        <div class="empty-content">
+          <i class="el-icon-goods"></i>
+          <h3>暂无秒杀商品</h3>
+          <p>敬请期待更多精彩活动</p>
+          <el-button type="primary" @click="goToHome">返回首页</el-button>
+        </div>
+      </div>
+
       <!-- 秒杀商品列表 -->
-      <div class="seckill-products">
-        <div 
-          v-for="product in seckillProducts" 
+      <div v-else class="seckill-products">
+        <div
+          v-for="product in seckillProducts"
           :key="product.id"
           class="seckill-item"
           @click="goToProductDetail(product.id)"
         >
           <div class="product-image">
-            <img :src="product.image" :alt="product.name" />
+            <img :src="formatImageUrl(product.image)" :alt="product.name" />
+            <div class="seckill-badge">秒杀</div>
           </div>
           <div class="product-info">
             <h4 class="product-name">{{ product.name }}</h4>
             <div class="price-group">
               <span class="seckill-price">¥{{ product.seckillPrice }}</span>
-              <span class="original-price">¥{{ product.originalPrice }}</span>
+              <span class="original-price">¥{{ product.price }}</span>
             </div>
             <div class="seckill-progress">
               <div class="progress-info">
-                <span class="progress-text">已抢{{ product.soldPercentage }}%</span>
-                <span class="stock-text">剩余{{ product.stock }}件</span>
+                <span class="progress-text">已抢{{ calculateProgress(product) }}%</span>
+                <span class="stock-text">剩余{{ product.quota }}件</span>
               </div>
               <div class="progress-bar">
-                <div class="progress" :style="{ width: product.soldPercentage + '%' }"></div>
+                <div class="progress" :style="{ width: calculateProgress(product) + '%' }"></div>
               </div>
             </div>
             <div class="action-buttons">
-              <el-button 
-                type="danger" 
+              <el-button
+                type="danger"
                 size="small"
                 @click.stop="instantBuy(product)"
-                :disabled="product.stock === 0 || timeStatus !== 'ongoing'"
+                :disabled="product.quota === 0 || timeStatus !== 'ongoing'"
                 :loading="product.buying"
               >
-                {{ product.stock === 0 ? '已抢完' : '立即预定' }}
+                {{ product.quota === 0 ? '已抢完' : '立即抢购' }}
               </el-button>
             </div>
           </div>
@@ -85,7 +103,7 @@
 </template>
 
 <script>
-import { getSeckillProducts } from '@/api/home'
+import { getSeckillInfo } from '@/api/seckill'
 
 export default {
   name: 'SeckillIndex',
@@ -98,63 +116,13 @@ export default {
         seconds: '26'
       },
       timer: null,
-      seckillProducts: [
-        {
-          id: 1,
-          name: '【超品预售】TOMFORD汤姆福特唇膏4色TF口红黑管套装礼盒16',
-          image: 'https://dummyimage.com/300x300/34a853/ffffff&text=TOMFORD',
-          seckillPrice: 0,
-          originalPrice: 299,
-          soldPercentage: 100,
-          stock: 0,
-          buying: false
-        },
-        {
-          id: 2,
-          name: 'bencross北欧简约化妆品收纳盒竹提分区储物盒防尘梳妆台卫生间整理收纳',
-          image: 'https://dummyimage.com/300x300/fbbc05/ffffff&text=收纳盒',
-          seckillPrice: 0,
-          originalPrice: 99,
-          soldPercentage: 32,
-          stock: 68,
-          buying: false
-        },
-        {
-          id: 3,
-          name: 'Lola Rose英玫瑰颗粒项链特原装女款',
-          image: 'https://dummyimage.com/300x300/ea4335/ffffff&text=Lola+Rose',
-          seckillPrice: 0,
-          originalPrice: 2099,
-          soldPercentage: 90,
-          stock: 10,
-          buying: false
-        },
-        {
-          id: 4,
-          name: 'HEFANG何方珠宝细钢链组织小方糖项链轻奢简约饰品生日礼物',
-          image: 'https://dummyimage.com/300x300/4285f4/ffffff&text=HEFANG',
-          seckillPrice: 0,
-          originalPrice: 90,
-          soldPercentage: 80,
-          stock: 20,
-          buying: false
-        },
-        {
-          id: 5,
-          name: '阿迪达斯官网 adidas BBALL CAP COT 男女训练运动帽子',
-          image: 'https://dummyimage.com/300x300/2196f3/ffffff&text=adidas',
-          seckillPrice: 0,
-          originalPrice: 200,
-          soldPercentage: 45,
-          stock: 55,
-          buying: false
-        }
-      ]
+      loading: false,
+      seckillProducts: []
     }
   },
   mounted() {
     this.startCountdown()
-    this.loadData()
+    this.loadSeckillProducts()
   },
   beforeDestroy() {
     if (this.timer) {
@@ -162,21 +130,75 @@ export default {
     }
   },
   methods: {
-    async loadData() {
+    async loadSeckillProducts() {
       try {
-        // 加载秒杀商品数据
-        // const res = await getSeckillProducts()
-        // this.seckillProducts = res.data || []
+        this.loading = true
+        console.log('开始获取秒杀商品数据...')
+        
+        const response = await getSeckillInfo()
+        console.log('秒杀商品API响应:', response)
+
+        if (response.code === 200) {
+          // 处理成功响应，包括空数据的情况
+          if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+            this.seckillProducts = response.data.map(product => ({
+              ...product,
+              buying: false // 添加购买状态
+            }))
+            console.log('秒杀商品数据:', this.seckillProducts)
+          } else {
+            // 数据为空或null的情况，不显示错误，只是设置为空数组
+            this.seckillProducts = []
+            console.log('暂无秒杀商品数据')
+          }
+        } else {
+          // 只有在明确的错误响应时才显示错误信息
+          console.error('获取秒杀商品失败:', response)
+          this.seckillProducts = []
+          // 可以选择性地显示错误信息，或者只在严重错误时显示
+          // this.$message.error('获取秒杀商品失败')
+        }
       } catch (error) {
         console.error('加载秒杀商品失败:', error)
+        this.seckillProducts = []
+        // 只在网络错误等严重情况下显示错误信息
+        if (error.message && !error.message.includes('timeout')) {
+          this.$message.error('网络错误，请稍后重试')
+        }
+      } finally {
+        this.loading = false
       }
     },
+
+    calculateProgress(product) {
+      if (!product.quotaShow || product.quotaShow === 0) {
+        return 0
+      }
+      const sold = product.quotaShow - product.quota
+      return Math.min(100, Math.max(0, Math.round((sold / product.quotaShow) * 100)))
+    },
+
+    formatImageUrl(imageUrl) {
+      if (!imageUrl) {
+        return 'https://dummyimage.com/300x300/f0f0f0/999999&text=暂无图片'
+      }
+      
+      // 如果是完整的URL，直接返回
+      if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+        return imageUrl
+      }
+      
+      // 如果是相对路径，拼接基础URL
+      const baseURL = process.env.NODE_ENV === 'development' ? 'http://localhost:20002' : ''
+      return `${baseURL}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`
+    },
+
     startCountdown() {
       this.timer = setInterval(() => {
         let seconds = parseInt(this.timeLeft.seconds)
         let minutes = parseInt(this.timeLeft.minutes)
         let hours = parseInt(this.timeLeft.hours)
-        
+
         if (seconds > 0) {
           seconds--
         } else {
@@ -195,7 +217,7 @@ export default {
             }
           }
         }
-        
+
         this.timeLeft = {
           hours: hours.toString().padStart(2, '0'),
           minutes: minutes.toString().padStart(2, '0'),
@@ -203,35 +225,39 @@ export default {
         }
       }, 1000)
     },
+
     goToProductDetail(productId) {
       this.$router.push(`/seckill/detail/${productId}`)
     },
+
     async instantBuy(product) {
-      if (product.stock === 0 || this.timeStatus !== 'ongoing') {
+      if (product.quota === 0 || this.timeStatus !== 'ongoing') {
         return
       }
-      
+
+      // 检查登录状态
+      if (!this.$store.getters.token) {
+        this.$message.warning('请先登录')
+        this.$router.push('/login')
+        return
+      }
+
       try {
         product.buying = true
-        
-        // 调用秒杀购买API
-        // await buySeckillProduct({
-        //   productId: product.id,
-        //   quantity: 1
-        // })
-        
-        this.$message.success('预定成功！')
-        
-        // 更新库存
-        product.stock--
-        product.soldPercentage = Math.min(100, product.soldPercentage + 1)
-        
+
+        // 直接跳转到秒杀商品详情页进行购买
+        this.$router.push(`/seckill/detail/${product.id}`)
+
       } catch (error) {
-        console.error('预定失败:', error)
-        this.$message.error('预定失败，请稍后重试')
+        console.error('跳转失败:', error)
+        this.$message.error('跳转失败，请稍后重试')
       } finally {
         product.buying = false
       }
+    },
+
+    goToHome() {
+      this.$router.push('/')
     }
   }
 }
@@ -241,17 +267,17 @@ export default {
 .seckill-page {
   background: #f5f5f5;
   min-height: calc(100vh - 160px);
-  
+
   .container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
   }
-  
+
   // 秒杀头部
   .seckill-header {
     margin-bottom: 30px;
-    
+
     .header-bg {
       background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 50%, #ff8a80 100%);
       border-radius: 12px;
@@ -259,7 +285,7 @@ export default {
       color: white;
       position: relative;
       overflow: hidden;
-      
+
       &::before {
         content: '';
         position: absolute;
@@ -270,7 +296,7 @@ export default {
         background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="30" r="1.5" fill="rgba(255,255,255,0.1)"/><circle cx="40" cy="70" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="90" cy="80" r="2.5" fill="rgba(255,255,255,0.1)"/></svg>');
         opacity: 0.3;
       }
-      
+
       .header-content {
         position: relative;
         z-index: 1;
@@ -278,7 +304,7 @@ export default {
         justify-content: space-between;
         align-items: center;
       }
-      
+
       .seckill-title {
         h2 {
           margin: 0;
@@ -287,33 +313,33 @@ export default {
           text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
         }
       }
-      
+
       .countdown-section {
         display: flex;
         flex-direction: column;
         align-items: flex-end;
         gap: 20px;
-        
+
         .time-status {
           display: flex;
           align-items: center;
-          
+
           .status-item {
             display: flex;
             flex-direction: column;
             align-items: center;
             opacity: 0.6;
             transition: all 0.3s;
-            
+
             &.active {
               opacity: 1;
-              
+
               .status-circle {
                 background: white;
                 box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
               }
             }
-            
+
             .status-circle {
               width: 12px;
               height: 12px;
@@ -322,13 +348,13 @@ export default {
               margin-bottom: 8px;
               transition: all 0.3s;
             }
-            
+
             span {
               font-size: 14px;
               white-space: nowrap;
             }
           }
-          
+
           .status-line {
             width: 60px;
             height: 2px;
@@ -337,21 +363,21 @@ export default {
             margin-bottom: 22px;
           }
         }
-        
+
         .time-display {
           display: flex;
           align-items: center;
           gap: 15px;
-          
+
           .time-label {
             font-size: 18px;
             font-weight: bold;
           }
-          
+
           .time-group {
             display: flex;
             align-items: center;
-            
+
             .time-item {
               display: inline-block;
               width: 40px;
@@ -364,7 +390,7 @@ export default {
               font-size: 18px;
               box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
             }
-            
+
             .time-separator {
               margin: 0 8px;
               font-weight: bold;
@@ -375,105 +401,157 @@ export default {
       }
     }
   }
-  
+
+  // 加载状态
+  .loading-section {
+    background: white;
+    border-radius: 12px;
+    margin-bottom: 30px;
+  }
+
+  // 空状态
+  .empty-section {
+    background: white;
+    border-radius: 12px;
+    padding: 80px 20px;
+    text-align: center;
+
+    .empty-content {
+      i {
+        font-size: 64px;
+        color: #ddd;
+        margin-bottom: 20px;
+      }
+
+      h3 {
+        margin: 0 0 12px 0;
+        color: #333;
+        font-size: 20px;
+      }
+
+      p {
+        margin: 0 0 30px 0;
+        color: #666;
+        font-size: 14px;
+      }
+    }
+  }
+
   // 秒杀商品列表
   .seckill-products {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 20px;
-    
+    gap: 30px;
+
     .seckill-item {
       background: white;
       border-radius: 12px;
       overflow: hidden;
       cursor: pointer;
-      transition: all 0.3s;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+
       &:hover {
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-        transform: translateY(-4px);
+        transform: translateY(-8px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
       }
-      
+
       .product-image {
-        height: 200px;
-        background: #f8f9fa;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        
+        height: 240px;
+        position: relative;
+        overflow: hidden;
+
         img {
-          max-width: 100%;
-          max-height: 100%;
-          object-fit: contain;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          transition: transform 0.3s;
+        }
+
+        &:hover img {
+          transform: scale(1.05);
+        }
+
+        .seckill-badge {
+          position: absolute;
+          top: 12px;
+          left: 12px;
+          background: linear-gradient(45deg, #f56c6c, #ff8a80);
+          color: white;
+          padding: 4px 12px;
+          border-radius: 12px;
+          font-size: 12px;
+          font-weight: bold;
+          box-shadow: 0 2px 8px rgba(245, 108, 108, 0.3);
         }
       }
-      
+
       .product-info {
         padding: 20px;
-        
+
         .product-name {
-          font-size: 14px;
+          margin: 0 0 16px 0;
+          font-size: 16px;
+          font-weight: 600;
           color: #333;
           line-height: 1.5;
-          margin: 0 0 15px 0;
           overflow: hidden;
           text-overflow: ellipsis;
           display: -webkit-box;
           -webkit-line-clamp: 2;
           -webkit-box-orient: vertical;
-          height: 42px;
+          height: 48px;
         }
-        
+
         .price-group {
-          margin-bottom: 15px;
-          
+          margin-bottom: 20px;
+
           .seckill-price {
             color: #f56c6c;
             font-size: 24px;
             font-weight: bold;
+            margin-right: 12px;
           }
-          
+
           .original-price {
             color: #999;
             text-decoration: line-through;
-            margin-left: 10px;
             font-size: 16px;
           }
         }
-        
+
         .seckill-progress {
           margin-bottom: 20px;
-          
+
           .progress-info {
             display: flex;
             justify-content: space-between;
             margin-bottom: 8px;
             font-size: 12px;
-            
+
             .progress-text {
               color: #f56c6c;
               font-weight: bold;
             }
-            
+
             .stock-text {
               color: #666;
             }
           }
-          
+
           .progress-bar {
             width: 100%;
             height: 8px;
             background: #f0f0f0;
             border-radius: 4px;
             overflow: hidden;
-            
+
             .progress {
               height: 100%;
               background: linear-gradient(to right, #f56c6c, #ff8a80);
               transition: width 0.3s;
               position: relative;
-              
+
               &::after {
                 content: '';
                 position: absolute;
@@ -488,78 +566,98 @@ export default {
             }
           }
         }
-        
+
         .action-buttons {
-          text-align: center;
-          
           .el-button {
             width: 100%;
-            height: 40px;
+            height: 44px;
             font-size: 16px;
             font-weight: bold;
-            border-radius: 20px;
+            border-radius: 22px;
+            border: none;
             
             &.el-button--danger {
-              background: linear-gradient(135deg, #f56c6c, #ff8a80);
-              border: none;
+              background: linear-gradient(45deg, #f56c6c, #ff8a80);
               
-              &:hover:not(:disabled) {
-                background: linear-gradient(135deg, #e85656, #ff7a70);
+              &:hover:not(.is-disabled) {
+                background: linear-gradient(45deg, #f45656, #ff7a7a);
                 transform: translateY(-1px);
                 box-shadow: 0 4px 12px rgba(245, 108, 108, 0.4);
               }
-              
-              &:disabled {
-                background: #c0c4cc;
-                color: white;
-              }
+            }
+
+            &.is-disabled {
+              background: #e8e8e8 !important;
+              color: #999 !important;
             }
           }
         }
       }
     }
   }
+
+  @keyframes progress-animation {
+    0% {
+      background-position: 0 0;
+    }
+    100% {
+      background-position: 20px 0;
+    }
+  }
 }
 
-@keyframes progress-animation {
-  0% {
-    background-position: 0 0;
-  }
-  100% {
-    background-position: 20px 0;
-  }
-}
-
-// 响应式设计
 @media (max-width: 768px) {
   .seckill-page {
+    .container {
+      padding: 15px;
+    }
+
     .seckill-header {
       .header-bg {
         padding: 20px;
-        
+
         .header-content {
           flex-direction: column;
-          text-align: center;
           gap: 20px;
+          text-align: center;
         }
-        
+
         .countdown-section {
           align-items: center;
-          
-          .time-status {
-            .status-line {
-              width: 40px;
-              margin: 0 10px;
+        }
+      }
+    }
+
+    .seckill-products {
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+
+      .seckill-item {
+        .product-image {
+          height: 200px;
+        }
+
+        .product-info {
+          padding: 15px;
+
+          .product-name {
+            font-size: 14px;
+            height: 42px;
+            -webkit-line-clamp: 2;
+          }
+
+          .price-group {
+            .seckill-price {
+              font-size: 20px;
+            }
+
+            .original-price {
+              font-size: 14px;
             }
           }
         }
       }
     }
-    
-    .seckill-products {
-      grid-template-columns: 1fr;
-      gap: 15px;
-    }
   }
 }
-</style> 
+</style>

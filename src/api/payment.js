@@ -68,4 +68,4 @@ export function queryWechatPaymentResult(params) {
     method: 'get',
     params
   })
-} 
+}

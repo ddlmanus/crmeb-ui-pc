@@ -39,7 +39,7 @@
         </div>
       </div>
     </div>
-    
+
     <!-- 主导航栏 -->
     <div class="main-navbar">
       <div class="container">
@@ -50,7 +50,7 @@
               <span class="logo-text">CRMEB</span>
             </router-link>
           </div>
-          
+
           <!-- 主菜单 -->
           <div class="main-menu">
             <div class="menu-item category-menu">
@@ -75,10 +75,14 @@
             </div>
             <router-link to="/seckill" class="menu-item">限时秒杀</router-link>
             <router-link to="/presale" class="menu-item">限时预售</router-link>
+            <router-link to="/coupon/center" class="menu-item coupon-menu">
+              <i class="el-icon-present"></i>
+              领券中心
+            </router-link>
             <router-link to="/news" class="menu-item">新闻列表</router-link>
             <router-link to="/about" class="menu-item">关于我们</router-link>
           </div>
-          
+
           <!-- 搜索框 -->
           <div class="search-box">
             <el-input
@@ -121,7 +125,7 @@ export default {
   mounted() {
     this.getCartCount()
     this.loadCategories()
-    
+
     // 如果有token但没有用户信息，则获取用户信息
     if (this.token && !this.userInfo.id) {
       this.$store.dispatch('user/getUserInfo')
@@ -159,27 +163,27 @@ export default {
     },
     handleCommand(command) {
       switch (command) {
-        case 'center':
-          this.$router.push('/user/center')
-          break
-        case 'profile':
-          this.$router.push('/user/profile')
-          break
-        case 'order':
-          this.$router.push('/order/list')
-          break
-        case 'refund':
-          this.$router.push('/refund/list')
-          break
-        case 'collect':
-          this.$router.push('/user/collect')
-          break
-        case 'address':
-          this.$router.push('/user/address')
-          break
-        case 'logout':
-          this.handleLogout()
-          break
+      case 'center':
+        this.$router.push('/user/center')
+        break
+      case 'profile':
+        this.$router.push('/user/profile')
+        break
+      case 'order':
+        this.$router.push('/order/list')
+        break
+      case 'refund':
+        this.$router.push('/refund/list')
+        break
+      case 'collect':
+        this.$router.push('/user/collect')
+        break
+      case 'address':
+        this.$router.push('/user/address')
+        break
+      case 'logout':
+        this.handleLogout()
+        break
       }
     },
     async handleLogout() {
@@ -211,14 +215,14 @@ export default {
 <style lang="scss" scoped>
 .navbar {
   background: white;
-  
+
   .top-bar {
     background: #333;
     color: white;
     height: 30px;
     line-height: 30px;
     font-size: 12px;
-    
+
     .container {
       display: flex;
       justify-content: space-between;
@@ -227,43 +231,43 @@ export default {
       margin: 0 auto;
       padding: 0 20px;
     }
-    
+
     .top-left {
       .star-icon {
         color: #ffd700;
         margin-right: 4px;
       }
     }
-    
+
     .top-right {
       display: flex;
       align-items: center;
-      
+
       .link {
         color: white;
         text-decoration: none;
-        
+
         &:hover {
           color: #409EFF;
         }
       }
-      
+
       .divider {
         margin: 0 8px;
         color: #666;
       }
-      
+
       .user-dropdown {
         .user-info {
           color: white;
           cursor: pointer;
-          
+
           &:hover {
             color: #409EFF;
           }
         }
       }
-      
+
       .cart-link {
         .cart-count {
           color: #f56c6c;
@@ -272,35 +276,35 @@ export default {
       }
     }
   }
-  
+
   .main-navbar {
     border-bottom: 1px solid #e6e6e6;
-    
+
     .container {
       max-width: 1200px;
       margin: 0 auto;
       padding: 0 20px;
     }
-    
+
     .navbar-content {
       display: flex;
       align-items: center;
       height: 80px;
     }
-    
+
     .logo {
       margin-right: 30px;
-      
+
       a {
         display: flex;
         align-items: center;
         text-decoration: none;
-        
+
         img {
           height: 40px;
           margin-right: 8px;
         }
-        
+
         .logo-text {
           font-size: 24px;
           font-weight: bold;
@@ -308,12 +312,12 @@ export default {
         }
       }
     }
-    
+
     .main-menu {
       display: flex;
       align-items: center;
       margin-right: 30px;
-      
+
       .menu-item {
         display: flex;
         align-items: center;
@@ -324,25 +328,25 @@ export default {
         text-decoration: none;
         font-size: 14px;
         position: relative;
-        
+
         &:hover {
           color: #409EFF;
         }
-        
+
         &.category-menu {
           background: #f5f5f5;
           border-radius: 4px;
-          
+
           &:hover .category-dropdown {
             display: block;
           }
         }
-        
+
         i {
           margin-right: 4px;
         }
       }
-      
+
       .category-dropdown {
         display: none;
         position: absolute;
@@ -354,7 +358,7 @@ export default {
         border-radius: 4px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         z-index: 1000;
-        
+
         .category-list {
           .category-item {
             display: flex;
@@ -363,19 +367,19 @@ export default {
             padding: 0 15px;
             border-bottom: 1px solid #f5f5f5;
             cursor: pointer;
-            
+
             &:hover {
               background: #f5f5f5;
               color: #409EFF;
             }
-            
+
             &:last-child {
               border-bottom: none;
             }
-            
+
             i {
               margin-right: 8px;
-              
+
               &.el-icon-arrow-right {
                 margin-left: auto;
                 margin-right: 0;
@@ -385,27 +389,27 @@ export default {
         }
       }
     }
-    
+
     .search-box {
       flex: 1;
       max-width: 400px;
-      
+
       .search-input {
         ::v-deep .el-input__inner {
           border-radius: 20px 0 0 20px;
           border-right: none;
         }
-        
+
         ::v-deep .el-input-group__append {
           border-radius: 0 20px 20px 0;
           background: #f56c6c;
           border-color: #f56c6c;
-          
+
           .search-btn {
             background: transparent;
             border: none;
             color: white;
-            
+
             &:hover {
               background: rgba(255, 255, 255, 0.1);
             }
@@ -415,4 +419,4 @@ export default {
     }
   }
 }
-</style> 
+</style>

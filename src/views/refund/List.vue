@@ -9,7 +9,7 @@
 
     <!-- 筛选标签 -->
     <div class="filter-tabs">
-      <div 
+      <div
         class="tab-item"
         :class="{ active: activeTab === 'all' }"
         @click="switchTab('all')"
@@ -17,7 +17,7 @@
         全部
         <span class="count" v-if="statusCounts.all">({{ statusCounts.all }})</span>
       </div>
-      <div 
+      <div
         class="tab-item"
         :class="{ active: activeTab === 'pending' }"
         @click="switchTab('pending')"
@@ -25,7 +25,7 @@
         待审核
         <span class="count" v-if="statusCounts.pending">({{ statusCounts.pending }})</span>
       </div>
-      <div 
+      <div
         class="tab-item"
         :class="{ active: activeTab === 'approved' }"
         @click="switchTab('approved')"
@@ -33,7 +33,7 @@
         已同意
         <span class="count" v-if="statusCounts.approved">({{ statusCounts.approved }})</span>
       </div>
-      <div 
+      <div
         class="tab-item"
         :class="{ active: activeTab === 'rejected' }"
         @click="switchTab('rejected')"
@@ -41,7 +41,7 @@
         已拒绝
         <span class="count" v-if="statusCounts.rejected">({{ statusCounts.rejected }})</span>
       </div>
-      <div 
+      <div
         class="tab-item"
         :class="{ active: activeTab === 'completed' }"
         @click="switchTab('completed')"
@@ -54,9 +54,9 @@
     <!-- 搜索栏 -->
     <div class="search-bar">
       <div class="search-input">
-        <input 
-          type="text" 
-          v-model="searchKeyword" 
+        <input
+          type="text"
+          v-model="searchKeyword"
           placeholder="搜索订单号或商品名称"
           @keyup.enter="handleSearch"
         >
@@ -68,13 +68,13 @@
           <option value="1">仅退款</option>
           <option value="2">退货退款</option>
         </select>
-        <input 
-          type="date" 
+        <input
+          type="date"
           v-model="searchParams.startDate"
           placeholder="开始日期"
         >
-        <input 
-          type="date" 
+        <input
+          type="date"
           v-model="searchParams.endDate"
           placeholder="结束日期"
         >
@@ -158,24 +158,24 @@
           </div>
 
           <div class="refund-actions">
-            <button 
-              @click="viewDetail(refund)" 
+            <button
+              @click="viewDetail(refund)"
               class="btn-detail"
             >
               查看详情
             </button>
-            
-            <button 
+
+            <button
               v-if="refund.status === 0"
-              @click="cancelRefund(refund.id)" 
+              @click="cancelRefund(refund.id)"
               class="btn-cancel"
             >
               取消申请
             </button>
-            
-            <button 
+
+            <button
               v-if="refund.status === 1 && refund.type === 2"
-              @click="fillLogistics(refund)" 
+              @click="fillLogistics(refund)"
               class="btn-logistics"
             >
               填写快递
@@ -186,17 +186,17 @@
 
       <!-- 分页 -->
       <div class="pagination" v-if="pagination.total > pagination.pageSize">
-        <button 
+        <button
           @click="changePage(pagination.page - 1)"
           :disabled="pagination.page <= 1"
           class="page-btn"
         >
           上一页
         </button>
-        
+
         <div class="page-numbers">
-          <span 
-            v-for="page in pageNumbers" 
+          <span
+            v-for="page in pageNumbers"
             :key="page"
             class="page-number"
             :class="{ active: page === pagination.page }"
@@ -205,8 +205,8 @@
             {{ page }}
           </span>
         </div>
-        
-        <button 
+
+        <button
           @click="changePage(pagination.page + 1)"
           :disabled="pagination.page >= Math.ceil(pagination.total / pagination.pageSize)"
           class="page-btn"
@@ -239,15 +239,15 @@
           </div>
           <div class="form-item">
             <label>快递单号：</label>
-            <input 
-              type="text" 
+            <input
+              type="text"
               v-model="logisticsForm.trackingNumber"
               placeholder="请输入快递单号"
             >
           </div>
           <div class="form-item">
             <label>备注：</label>
-            <textarea 
+            <textarea
               v-model="logisticsForm.remark"
               placeholder="请输入备注信息（选填）"
               rows="3"
@@ -301,14 +301,14 @@ export default {
       const total = Math.ceil(this.pagination.total / this.pagination.pageSize)
       const current = this.pagination.page
       const numbers = []
-      
+
       let start = Math.max(1, current - 2)
       let end = Math.min(total, current + 2)
-      
+
       for (let i = start; i <= end; i++) {
         numbers.push(i)
       }
-      
+
       return numbers
     },
     canSubmitLogistics() {
@@ -322,7 +322,7 @@ export default {
   methods: {
     async loadRefundList() {
       this.loading = true
-      
+
       try {
         const params = {
           page: this.pagination.page,
@@ -1044,54 +1044,54 @@ export default {
   .refund-list-container {
     padding: 15px;
   }
-  
+
   .page-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 15px;
   }
-  
+
   .filter-tabs {
     flex-direction: column;
   }
-  
+
   .search-filters {
     flex-direction: column;
   }
-  
+
   .refund-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
   }
-  
+
   .refund-info {
     flex-direction: column;
     gap: 5px;
   }
-  
+
   .goods-item {
     flex-direction: column;
     text-align: center;
   }
-  
+
   .goods-image {
     margin: 0 0 10px 0;
   }
-  
+
   .refund-details {
     grid-template-columns: 1fr;
   }
-  
+
   .refund-actions {
     flex-direction: column;
   }
-  
+
   .pagination {
     flex-direction: column;
     gap: 15px;
   }
-  
+
   .page-numbers {
     order: -1;
   }

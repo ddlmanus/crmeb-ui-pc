@@ -1,0 +1,9 @@
+build/
+dist/
+node_modules/
+public/
+*.min.js
+vue.config.js
+babel.config.js
+jest.config.js
+.eslintrc.js 

@@ -26,7 +26,7 @@
                 </div>
               </div>
             </div>
-            
+
             <!-- 轮播图区域 -->
             <div class="banner-container">
               <div v-if="loading" class="banner-loading">
@@ -41,12 +41,12 @@
               <el-carousel v-else height="400px" :interval="4000" arrow="hover" indicator-position="inside">
                 <el-carousel-item v-for="banner in bannerList" :key="banner.id">
                   <div class="banner-item" @click="goToLink(banner.link)">
-                    <img 
-                      :src="banner.image" 
-                      :alt="banner.title" 
+                    <img
+                      :src="banner.image"
+                      :alt="banner.title"
                       :data-original-src="banner.originalUrl"
                       data-url-index="0"
-                      @error="handleImageError" 
+                      @error="handleImageError"
                     />
                   </div>
                 </el-carousel-item>
@@ -137,9 +137,9 @@
                   </span>
                 </div>
                 <div class="product-actions">
-                  <el-button 
-                    type="primary" 
-                    size="small" 
+                  <el-button
+                    type="primary"
+                    size="small"
                     @click.stop="addToCart(product)"
                     :loading="product.adding"
                   >
@@ -156,11 +156,11 @@
                 <div class="product-meta">
                   <span class="sales">{{ product.sales }}人付款</span>
                   <div class="rating" v-if="product.rating">
-                    <el-rate 
-                      v-model="product.rating" 
-                      disabled 
-                      show-score 
-                      text-color="#ff9900" 
+                    <el-rate
+                      v-model="product.rating"
+                      disabled
+                      show-score
+                      text-color="#ff9900"
                       score-template="{value}"
                       class="product-rating"
                     />
@@ -211,6 +211,7 @@
 import { addCartItem } from '@/api/cart'
 import { mapActions } from 'vuex'
 import { getHomeData } from '@/api/home'
+import { getSeckillInfo } from '@/api/seckill'
 import { formatImageUrl, getDefaultImage, getPossibleImageUrls } from '@/utils/image'
 
 export default {
@@ -248,14 +249,14 @@ export default {
       try {
         console.log('开始加载首页数据...')
         this.loading = true
-        
+
         // 只使用首页完整数据接口，避免重复调用
         const homeRes = await getHomeData()
         console.log('首页完整数据:', homeRes)
-        
+
         if (homeRes.code === 200 && homeRes.data) {
           const data = homeRes.data
-          
+
           // 更新轮播图
           if (data.banners && data.banners.length > 0) {
             this.bannerList = data.banners.map(banner => {
@@ -282,7 +283,7 @@ export default {
               }
             ]
           }
-          
+
           // 更新分类 - 统一数据格式
           if (data.categories && data.categories.length > 0) {
             this.categoryList = data.categories.map(category => ({
@@ -292,22 +293,14 @@ export default {
               image: category.icon // 保持原始图片地址
             }))
           }
-          
+
           // 更新秒杀商品
-          if (data.seckillProducts && data.seckillProducts.length > 0) {
-            this.seckillData.products = data.seckillProducts.map(product => ({
-              id: product.id,
-              name: product.storeName || product.name,
-              image: formatImageUrl(product.image),
-              price: product.otPrice || product.price,
-              originalPrice: product.price,
-              progress: Math.floor(Math.random() * 100) // 随机进度，实际应该从后端获取
-            }))
-          }
-          
+          // 获取真实的秒杀商品数据
+          await this.loadSeckillData()
+
           // 构建商品分类展示区域
           this.categoryProductSections = []
-          
+
           // 推荐商品
           if (data.recommendProducts && data.recommendProducts.length > 0) {
             this.categoryProductSections.push({
@@ -327,7 +320,7 @@ export default {
               }))
             })
           }
-          
+
           // 热销商品
           if (data.hotProducts && data.hotProducts.length > 0) {
             this.categoryProductSections.push({
@@ -347,7 +340,7 @@ export default {
               }))
             })
           }
-          
+
           // 新品商品
           if (data.newProducts && data.newProducts.length > 0) {
             this.categoryProductSections.push({
@@ -368,7 +361,7 @@ export default {
             })
           }
         }
-        
+
       } catch (error) {
         console.error('加载数据失败:', error)
         this.$message.error('加载数据失败，请稍后重试')
@@ -381,7 +374,7 @@ export default {
         let seconds = parseInt(this.timeLeft.seconds)
         let minutes = parseInt(this.timeLeft.minutes)
         let hours = parseInt(this.timeLeft.hours)
-        
+
         if (seconds > 0) {
           seconds--
         } else {
@@ -395,7 +388,7 @@ export default {
             }
           }
         }
-        
+
         this.timeLeft = {
           hours: hours.toString().padStart(2, '0'),
           minutes: minutes.toString().padStart(2, '0'),
@@ -423,15 +416,15 @@ export default {
     async addToCart(product) {
       try {
         product.adding = true
-        
+
         await addCartItem({
           productId: product.id,
           quantity: 1,
           skuId: null
         })
-        
+
         await this.getCartCount()
-        
+
         this.$message.success('添加购物车成功')
       } catch (error) {
         console.error('添加购物车失败:', error)
@@ -441,16 +434,56 @@ export default {
       }
     },
 
+    async loadSeckillData() {
+      try {
+        console.log('开始获取秒杀商品数据...')
+        const response = await getSeckillInfo()
+        console.log('首页秒杀商品API响应:', response)
+
+        if (response.code === 200) {
+          // 处理成功响应，包括空数据的情况
+          if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+            this.seckillData.products = response.data.map(product => {
+              const sold = product.quotaShow - product.quota
+              const progress = product.quotaShow > 0 ? Math.round((sold / product.quotaShow) * 100) : 0
+              
+              return {
+                id: product.id,
+                name: product.name,
+                image: formatImageUrl(product.image),
+                price: product.seckillPrice,
+                originalPrice: product.price,
+                progress: Math.min(100, Math.max(0, progress))
+              }
+            })
+            console.log('首页秒杀商品数据:', this.seckillData.products)
+          } else {
+            // 数据为空或null的情况，不显示错误，只是设置为空数组
+            this.seckillData.products = []
+            console.log('暂无秒杀商品数据')
+          }
+        } else {
+          // 只有在明确的错误响应时才记录错误，不显示用户提示
+          console.error('获取秒杀商品失败:', response)
+          this.seckillData.products = []
+        }
+      } catch (error) {
+        console.error('加载秒杀商品失败:', error)
+        this.seckillData.products = []
+        // 静默处理错误，不显示错误提示
+      }
+    },
+
     handleImageError(event) {
       console.error('图片加载失败:', event.target.src)
-      
+
       // 尝试其他可能的URL
       const originalSrc = event.target.getAttribute('data-original-src')
       if (originalSrc) {
         const possibleUrls = getPossibleImageUrls(originalSrc)
         const currentIndex = event.target.getAttribute('data-url-index') || 0
         const nextIndex = parseInt(currentIndex) + 1
-        
+
         if (nextIndex < possibleUrls.length) {
           console.log(`尝试第${nextIndex + 1}个图片URL:`, possibleUrls[nextIndex])
           event.target.setAttribute('data-url-index', nextIndex)
@@ -458,7 +491,7 @@ export default {
           return
         }
       }
-      
+
       // 所有URL都失败，设置默认图片
       console.log('所有图片URL都失败，使用默认图片')
       event.target.src = getDefaultImage('banner')
@@ -470,25 +503,25 @@ export default {
 <style lang="scss" scoped>
 .home-page {
   background: #f5f5f5;
-  
+
   .container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 20px;
   }
-  
+
   .banner-category-section {
     background: white;
-    
+
     .content-wrapper {
       display: flex;
       height: 400px;
     }
-    
+
     .category-sidebar {
       width: 220px;
       background: #f8f8f8;
-      
+
       .category-title {
         height: 40px;
         line-height: 40px;
@@ -496,12 +529,12 @@ export default {
         background: #333;
         color: white;
         font-size: 14px;
-        
+
         i {
           margin-right: 8px;
         }
       }
-      
+
       .category-list {
         .category-item {
           display: flex;
@@ -511,15 +544,15 @@ export default {
           border-bottom: 1px solid #e6e6e6;
           cursor: pointer;
           font-size: 13px;
-          
+
           &:hover {
             background: #e6e6e6;
             color: #f56c6c;
           }
-          
+
           i {
             margin-right: 8px;
-            
+
             &.el-icon-arrow-right {
               margin-left: auto;
               margin-right: 0;
@@ -528,10 +561,10 @@ export default {
         }
       }
     }
-    
+
     .banner-container {
       flex: 1;
-      
+
       .banner-loading,
       .banner-empty {
         height: 400px;
@@ -539,27 +572,27 @@ export default {
         align-items: center;
         justify-content: center;
         background: #f5f5f5;
-        
+
         .empty-placeholder {
           text-align: center;
           color: #999;
-          
+
           i {
             font-size: 48px;
             display: block;
             margin-bottom: 10px;
           }
-          
+
           span {
             font-size: 14px;
           }
         }
       }
-      
+
       .banner-item {
         height: 400px;
         cursor: pointer;
-        
+
         img {
           width: 100%;
           height: 100%;
@@ -568,43 +601,43 @@ export default {
       }
     }
   }
-  
+
   .seckill-section {
     margin-top: 10px;
     background: white;
-    
+
     .seckill-header {
       height: 80px;
       background: linear-gradient(to right, #ff6b6b, #ff8e8e);
       display: flex;
       align-items: center;
       padding: 0 20px;
-      
+
       .seckill-title {
         display: flex;
         align-items: center;
         color: white;
-        
+
         .title-icon {
           font-size: 24px;
           font-weight: bold;
           margin-right: 30px;
         }
-        
+
         .countdown {
           display: flex;
           align-items: center;
           margin-right: 30px;
-          
+
           .time-label {
             margin-right: 10px;
           }
-          
+
           .time-group {
             display: flex;
             align-items: center;
             margin-right: 10px;
-            
+
             .time-item {
               display: inline-block;
               width: 30px;
@@ -615,18 +648,18 @@ export default {
               border-radius: 4px;
               font-weight: bold;
             }
-            
+
             .time-separator {
               margin: 0 5px;
               font-weight: bold;
             }
           }
-          
+
           .time-unit {
             font-size: 14px;
           }
         }
-        
+
         .seckill-rule {
           span {
             margin-right: 10px;
@@ -635,12 +668,12 @@ export default {
         }
       }
     }
-    
+
     .seckill-products {
       display: flex;
       padding: 20px;
       gap: 20px;
-      
+
       .seckill-item {
         flex: 1;
         background: white;
@@ -649,33 +682,33 @@ export default {
         padding: 15px;
         cursor: pointer;
         transition: all 0.3s;
-        
+
         &:hover {
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
           transform: translateY(-2px);
         }
-        
+
         .product-image {
           height: 150px;
           text-align: center;
           margin-bottom: 10px;
-          
+
           img {
             height: 100%;
             object-fit: contain;
           }
         }
-        
+
         .product-info {
           .price-group {
             margin-bottom: 8px;
-            
+
             .current-price {
               color: #f56c6c;
               font-size: 18px;
               font-weight: bold;
             }
-            
+
             .original-price {
               color: #999;
               text-decoration: line-through;
@@ -683,7 +716,7 @@ export default {
               font-size: 14px;
             }
           }
-          
+
           .product-name {
             font-size: 14px;
             color: #333;
@@ -695,7 +728,7 @@ export default {
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
           }
-          
+
           .seckill-progress {
             .progress-bar {
               width: 100%;
@@ -704,14 +737,14 @@ export default {
               border-radius: 3px;
               overflow: hidden;
               margin-bottom: 5px;
-              
+
               .progress {
                 height: 100%;
                 background: linear-gradient(to right, #ff6b6b, #ff8e8e);
                 transition: width 0.3s;
               }
             }
-            
+
             .progress-text {
               font-size: 12px;
               color: #666;
@@ -721,28 +754,28 @@ export default {
       }
     }
   }
-  
+
   .category-product-section {
     margin-top: 20px;
     background: white;
     padding: 30px 0;
-    
+
     .section-header {
       text-align: center;
       margin-bottom: 30px;
       position: relative;
-      
+
       .section-title {
         font-size: 24px;
         color: #333;
         margin: 0 0 5px 0;
       }
-      
+
       .section-subtitle {
         color: #999;
         font-size: 14px;
       }
-      
+
       .more-link {
         position: absolute;
         right: 0;
@@ -750,18 +783,18 @@ export default {
         transform: translateY(-50%);
         color: #666;
         text-decoration: none;
-        
+
         &:hover {
           color: #f56c6c;
         }
       }
     }
-    
+
     .product-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 20px;
-      
+
       .product-item {
         background: white;
         border: 1px solid #e6e6e6;
@@ -769,31 +802,31 @@ export default {
         overflow: hidden;
         cursor: pointer;
         transition: all 0.3s;
-        
+
         &:hover {
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
           transform: translateY(-2px);
-          
+
           .product-actions {
             opacity: 1;
           }
         }
-        
+
         .product-image {
           position: relative;
           height: 200px;
-          
+
           img {
             width: 100%;
             height: 100%;
             object-fit: cover;
           }
-          
+
           .product-labels {
             position: absolute;
             top: 10px;
             left: 10px;
-            
+
             .product-label {
               display: inline-block;
               padding: 2px 6px;
@@ -801,21 +834,21 @@ export default {
               color: white;
               border-radius: 2px;
               margin-right: 5px;
-              
+
               &.hot {
                 background: #f56c6c;
               }
-              
+
               &.new {
                 background: #67c23a;
               }
-              
+
               &.sale {
                 background: #e6a23c;
               }
             }
           }
-          
+
           .product-actions {
             position: absolute;
             bottom: 10px;
@@ -825,10 +858,10 @@ export default {
             transition: all 0.3s;
           }
         }
-        
+
         .product-info {
           padding: 15px;
-          
+
           .product-name {
             font-size: 14px;
             color: #333;
@@ -841,16 +874,16 @@ export default {
             -webkit-box-orient: vertical;
             height: 40px;
           }
-          
+
           .price-group {
             margin-bottom: 8px;
-            
+
             .current-price {
               color: #f56c6c;
               font-size: 18px;
               font-weight: bold;
             }
-            
+
             .original-price {
               color: #999;
               text-decoration: line-through;
@@ -858,23 +891,23 @@ export default {
               font-size: 14px;
             }
           }
-          
+
           .product-meta {
             display: flex;
             justify-content: space-between;
             align-items: center;
             font-size: 12px;
             color: #999;
-            
+
             .product-rating {
               ::v-deep .el-rate {
                 height: 14px;
                 line-height: 14px;
-                
+
                 .el-rate__item {
                   font-size: 12px;
                 }
-                
+
                 .el-rate__text {
                   font-size: 12px;
                   margin-left: 4px;
@@ -886,29 +919,29 @@ export default {
       }
     }
   }
-  
+
   .service-section {
     margin-top: 10px;
     background: white;
     padding: 30px 0;
-    
+
     .service-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 20px;
-      
+
       .service-item {
         display: flex;
         align-items: center;
         justify-content: center;
         padding: 20px;
-        
+
         .service-icon {
           font-size: 40px;
           color: #409eff;
           margin-right: 15px;
         }
-        
+
         .service-info {
           h4 {
             margin: 0;
@@ -928,34 +961,34 @@ export default {
         flex-direction: column;
         height: auto;
       }
-      
+
       .category-sidebar {
         width: 100%;
         order: 2;
       }
-      
+
       .banner-container {
         order: 1;
         height: 200px;
-        
+
         .banner-item {
           height: 200px;
         }
       }
     }
-    
+
     .seckill-section {
       .seckill-products {
         flex-direction: column;
       }
     }
-    
+
     .category-product-section {
       .product-grid {
         grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
       }
     }
-    
+
     .service-section {
       .service-grid {
         grid-template-columns: repeat(2, 1fr);
@@ -963,4 +996,4 @@ export default {
     }
   }
 }
-</style> 
+</style>

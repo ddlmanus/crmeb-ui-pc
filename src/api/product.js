@@ -151,4 +151,4 @@ export function getProductDetailReply(id) {
     url: `/pc/product/reply/detail/${id}`,
     method: 'get'
   })
-} 
+}

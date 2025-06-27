@@ -111,6 +111,25 @@ export const constantRoutes = [
         component: () => import('@/views/user/Address'),
         meta: { title: '收货地址' },
         hidden: true
+      },
+      {
+        path: 'coupon',
+        name: 'UserCoupon',
+        component: () => import('@/views/user/Coupon'),
+        meta: { title: '我的优惠券' },
+        hidden: true
+      }
+    ]
+  },
+  {
+    path: '/coupon',
+    component: Layout,
+    children: [
+      {
+        path: 'center',
+        name: 'CouponCenter',
+        component: () => import('@/views/coupon/Index'),
+        meta: { title: '领券中心' }
       }
     ]
   },
@@ -216,4 +235,4 @@ export function resetRouter() {
   router.matcher = newRouter.matcher
 }
 
-export default router 
+export default router

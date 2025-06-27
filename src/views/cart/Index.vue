@@ -26,8 +26,8 @@
           <!-- 商户头部 -->
           <div class="merchant-header">
             <div class="merchant-info">
-              <el-checkbox 
-                :value="isMerchantSelected(merchant)" 
+              <el-checkbox
+                :value="isMerchantSelected(merchant)"
                 @change="handleMerchantSelectAll(merchant, $event)"
               ></el-checkbox>
               <i class="el-icon-shop"></i>
@@ -65,11 +65,11 @@
               <div class="col-quantity">
                 <div class="quantity-selector" :class="{ disabled: !item.attrStatus }">
                   <button @click="decreaseQuantity(item)" :disabled="item.cartNum <= 1 || !item.attrStatus">-</button>
-                  <input 
-                    v-model.number="item.cartNum" 
-                    @change="updateQuantity(item)" 
-                    type="number" 
-                    min="1" 
+                  <input
+                    v-model.number="item.cartNum"
+                    @change="updateQuantity(item)"
+                    type="number"
+                    min="1"
                     :max="item.stock"
                     :disabled="!item.attrStatus"
                   />
@@ -103,9 +103,9 @@
                 <span class="amount">¥{{ totalAmount }}</span>
               </div>
             </div>
-            <el-button 
-              type="primary" 
-              size="large" 
+            <el-button
+              type="primary"
+              size="large"
               :disabled="selectedCount === 0"
               @click="goToCheckout"
             >
@@ -154,12 +154,12 @@ export default {
       })
       return items
     },
-    
+
     // 总商品数量
     totalCartItems() {
       return this.allCartItems.reduce((total, item) => total + item.cartNum, 0)
     },
-    
+
     selectAll: {
       get() {
         const validItems = this.allCartItems.filter(item => item.attrStatus)
@@ -175,15 +175,15 @@ export default {
         })
       }
     },
-    
+
     selectedItems() {
       return this.allCartItems.filter(item => item.checked && item.attrStatus)
     },
-    
+
     selectedCount() {
       return this.selectedItems.reduce((total, item) => total + item.cartNum, 0)
     },
-    
+
     totalAmount() {
       return this.selectedItems.reduce((total, item) => {
         const price = this.getEffectivePrice(item)
@@ -200,7 +200,7 @@ export default {
         this.loading = true
         const response = await getCartList()
         console.log('购物车数据:', response)
-        
+
         if (response.code === 200 && response.data) {
           this.cartMerchantList = response.data.map(merchant => ({
             ...merchant,
@@ -220,7 +220,7 @@ export default {
         this.loading = false
       }
     },
-    
+
     // 获取商品有效价格（会员价或普通价）
     getEffectivePrice(item) {
       if (item.isPaidMember && item.vipPrice > 0) {
@@ -229,19 +229,19 @@ export default {
       }
       return parseFloat(item.price)
     },
-    
+
     // 获取商品小计价格
     getItemTotalPrice(item) {
       const price = this.getEffectivePrice(item)
       return (price * item.cartNum).toFixed(2)
     },
-    
+
     // 检查商户是否全选
     isMerchantSelected(merchant) {
       const validItems = merchant.cartInfoList.filter(item => item.attrStatus)
       return validItems.length > 0 && validItems.every(item => item.checked)
     },
-    
+
     // 商户全选/取消全选
     handleMerchantSelectAll(merchant, checked) {
       merchant.cartInfoList.forEach(item => {
@@ -250,7 +250,7 @@ export default {
         }
       })
     },
-    
+
     handleSelectAll(value) {
       this.cartMerchantList.forEach(merchant => {
         merchant.cartInfoList.forEach(item => {
@@ -260,14 +260,14 @@ export default {
         })
       })
     },
-    
+
     handleItemCheck() {
       // 更新选中状态
     },
-    
+
     async updateQuantity(item) {
       if (!item.attrStatus) return
-      
+
       try {
         await updateCartNum(item.id, item.cartNum)
         this.$store.dispatch('cart/getCartCount')
@@ -277,19 +277,19 @@ export default {
         this.fetchCartList() // 重新获取数据
       }
     },
-    
+
     decreaseQuantity(item) {
       if (!item.attrStatus || item.cartNum <= 1) return
       item.cartNum--
       this.updateQuantity(item)
     },
-    
+
     increaseQuantity(item) {
       if (!item.attrStatus || item.cartNum >= item.stock) return
       item.cartNum++
       this.updateQuantity(item)
     },
-    
+
     async removeItem(item) {
       try {
         await this.$confirm('确定要删除这件商品吗？', '提示', {
@@ -297,7 +297,7 @@ export default {
           cancelButtonText: '取消',
           type: 'warning'
         })
-        
+
         await deleteCart([item.id])
         this.fetchCartList() // 重新获取购物车数据
         this.$store.dispatch('cart/getCartCount')
@@ -309,21 +309,21 @@ export default {
         }
       }
     },
-    
+
     async clearSelected() {
       const selectedIds = this.selectedItems.map(item => item.id)
       if (selectedIds.length === 0) {
         this.$message.warning('请先选择要删除的商品')
         return
       }
-      
+
       try {
         await this.$confirm(`确定要删除选中的 ${selectedIds.length} 件商品吗？`, '提示', {
           confirmButtonText: '确定',
           cancelButtonText: '取消',
           type: 'warning'
         })
-        
+
         await deleteCart(selectedIds)
         this.fetchCartList() // 重新获取购物车数据
         this.$store.dispatch('cart/getCartCount')
@@ -335,13 +335,13 @@ export default {
         }
       }
     },
-    
+
     goToCheckout() {
       if (this.selectedCount === 0) {
         this.$message.warning('请先选择要结算的商品')
         return
       }
-      
+
       // 跳转到订单确认页面
       const cartIds = this.selectedItems.map(item => item.id)
       this.$router.push({
@@ -371,15 +371,15 @@ export default {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
-  
+
   h2 {
     margin: 0;
     color: #333;
   }
-  
+
   .cart-count {
     color: #666;
-    
+
     span {
       color: #ff4757;
       font-weight: bold;
@@ -406,7 +406,7 @@ export default {
 
 .merchant-section {
   border-bottom: 10px solid #f5f5f5;
-  
+
   &:last-child {
     border-bottom: none;
   }
@@ -416,12 +416,12 @@ export default {
   padding: 15px 20px;
   background: #fafafa;
   border-bottom: 1px solid #e0e0e0;
-  
+
   .merchant-info {
     display: flex;
     align-items: center;
     gap: 10px;
-    
+
     .merchant-name {
       font-weight: bold;
       color: #333;
@@ -436,7 +436,7 @@ export default {
     align-items: center;
     padding: 15px 20px;
     border-bottom: 1px solid #f0f0f0;
-    
+
     &:last-child {
       border-bottom: none;
     }
@@ -452,30 +452,30 @@ export default {
     display: flex;
     align-items: center;
     gap: 15px;
-    
+
     img {
       width: 80px;
       height: 80px;
       object-fit: cover;
       border-radius: 4px;
     }
-    
+
     .product-details {
       flex: 1;
-      
+
       h4 {
         margin: 0 0 8px;
         font-size: 14px;
         line-height: 1.4;
         color: #333;
       }
-      
+
       .product-specs {
         font-size: 12px;
         color: #999;
         margin-bottom: 4px;
       }
-      
+
       .product-status {
         .status-invalid {
           color: #ff4757;
@@ -488,13 +488,13 @@ export default {
 
 .col-price {
   text-align: center;
-  
+
   .price {
     color: #ff4757;
     font-weight: bold;
     display: block;
   }
-  
+
   .vip-price {
     color: #f39c12;
     font-size: 12px;
@@ -505,7 +505,7 @@ export default {
 
 .col-total {
   text-align: center;
-  
+
   .total-price {
     color: #ff4757;
     font-weight: bold;
@@ -515,21 +515,21 @@ export default {
 
 .col-quantity {
   text-align: center;
-  
+
   .quantity-selector {
     display: inline-flex;
     align-items: center;
     border: 1px solid #e5e5e5;
     border-radius: 4px;
-    
+
     &.disabled {
       opacity: 0.5;
-      
+
       button, input {
         cursor: not-allowed;
       }
     }
-    
+
     button {
       width: 30px;
       height: 30px;
@@ -537,30 +537,30 @@ export default {
       background: #f5f5f5;
       cursor: pointer;
       font-size: 16px;
-      
+
       &:hover:not(:disabled) {
         background: #e0e0e0;
       }
-      
+
       &:disabled {
         opacity: 0.5;
         cursor: not-allowed;
       }
     }
-    
+
     input {
       width: 50px;
       height: 30px;
       border: none;
       text-align: center;
       outline: none;
-      
+
       &:disabled {
         background: #f5f5f5;
       }
     }
   }
-  
+
   .stock-warning {
     font-size: 12px;
     color: #ff4757;
@@ -579,34 +579,34 @@ export default {
   padding: 20px;
   background: #fafafa;
   border-top: 1px solid #e0e0e0;
-  
+
   .footer-left {
     display: flex;
     align-items: center;
     gap: 20px;
   }
-  
+
   .footer-right {
     display: flex;
     align-items: center;
     gap: 20px;
-    
+
     .total-info {
       text-align: right;
-      
+
       .selected-count {
         display: block;
         font-size: 12px;
         color: #666;
         margin-bottom: 5px;
       }
-      
+
       .total-amount {
         .label {
           color: #333;
           font-size: 16px;
         }
-        
+
         .amount {
           font-size: 24px;
           font-weight: bold;
@@ -623,19 +623,19 @@ export default {
   padding: 80px 20px;
   background: #fff;
   border-radius: 8px;
-  
+
   .empty-icon {
     font-size: 80px;
     color: #ddd;
     margin-bottom: 20px;
   }
-  
+
   .empty-text {
     font-size: 18px;
     color: #333;
     margin-bottom: 10px;
   }
-  
+
   .empty-desc {
     color: #666;
     margin-bottom: 30px;
@@ -649,22 +649,22 @@ export default {
     padding: 10px;
     font-size: 12px;
   }
-  
+
   .col-product {
     .product-info {
       gap: 10px;
-      
+
       img {
         width: 60px;
         height: 60px;
       }
-      
+
       .product-details h4 {
         font-size: 13px;
       }
     }
   }
-  
+
   .col-quantity {
     .quantity-selector {
       button {
@@ -672,7 +672,7 @@ export default {
         height: 25px;
         font-size: 14px;
       }
-      
+
       input {
         width: 40px;
         height: 25px;
@@ -680,15 +680,15 @@ export default {
       }
     }
   }
-  
+
   .cart-footer {
     flex-direction: column;
     gap: 15px;
-    
+
     .footer-left {
       order: 2;
     }
-    
+
     .footer-right {
       order: 1;
       width: 100%;
@@ -696,4 +696,4 @@ export default {
     }
   }
 }
-</style> 
+</style>
